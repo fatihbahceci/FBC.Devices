@@ -1,0 +1,48 @@
+﻿@inherits LayoutComponentBase
+<RadzenComponents @rendermode="InteractiveServer" />
+@inject NotificationService NotificationService
+
+
+<RadzenLayout>
+    <RadzenHeader>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+            <RadzenSidebarToggle Click="@(() => sidebar1Expanded = !sidebar1Expanded)" />
+            <RadzenLabel Text="Header" />
+        </RadzenStack>
+    </RadzenHeader>
+    <RadzenSidebar @bind-Expanded="@sidebar1Expanded">
+        <RadzenPanelMenu>
+            <RadzenPanelMenuItem Text="Home" Icon="home" Path="@C.NAV.HomePage" />
+            <RadzenPanelMenuItem Text="Edit" Icon="edit">
+                <RadzenPanelMenuItem Text="Address Types" Icon="alternate_email" Path="@C.NAV.Edit.AddrTypeList" />
+                <RadzenPanelMenuItem Text="Device Types" Icon="important_devices" Path="@C.NAV.Edit.DeviceTypeList" />
+                <RadzenPanelMenuItem Text="Device Groups" Icon="move_group" Path="@C.NAV.Edit.DeviceGroupList" />
+                <RadzenPanelMenuItem Text="Devices" Icon="devices_other" Path="@C.NAV.Edit.DeviceList" />
+            </RadzenPanelMenuItem>
+        </RadzenPanelMenu>
+        <div class="rz-p-4">
+            Sidebar
+        </div>
+    </RadzenSidebar>
+    <RadzenBody>
+        <div class="rz-p-4">
+            @Body
+        </div>
+    </RadzenBody>
+    <RadzenFooter>
+        Footer
+    </RadzenFooter>
+</RadzenLayout>
+
+<RadzenNotification />
+<RadzenDialog />
+
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+@code {
+    bool sidebar1Expanded = true;
+}

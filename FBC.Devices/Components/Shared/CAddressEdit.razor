@@ -1,0 +1,68 @@
+﻿@namespace FBC.Devices.Components.Shared
+@inject DeviceDB db
+
+@if (Model != null)
+{
+    <RadzenCard>
+        <RadzenStack Orientation="Orientation.Vertical">
+
+            <RadzenFormField AllowFloatingLabel="false" Text="AddrType">
+                <RadzenDropDown @bind-Value="@Model.AddrTypeId" Data="@db.AddrTypes.GetList(true)" TextProperty="Name" ValueProperty="AddrTypeId" />
+            </RadzenFormField>
+            <RadzenFormField AllowFloatingLabel="false" Text="Addr">
+                <RadzenTextBox @bind-Value="@Model.Addr" />
+            </RadzenFormField>
+            <RadzenFormField AllowFloatingLabel="false" Text="Username">
+                <RadzenTextBox @bind-Value="@Model.Username" />
+            </RadzenFormField>
+            <RadzenFormField AllowFloatingLabel="false" Text="Password">
+                <ChildContent>
+                    <RadzenTextBox @bind-Value="@Model.Password" Visible="@(!password)" />
+                    <RadzenPassword @bind-Value="@Model.Password" Visible="@password" />
+                </ChildContent>
+                <End>
+                    <RadzenButton Icon="@(password ? "visibility" : "visibility_off")" Click="TogglePassword" Variant="Variant.Text" Size="ButtonSize.Small" />
+                </End>
+            </RadzenFormField>
+            <RadzenFieldset>
+                <RadzenLabel Text="Periodic Ping Check" />
+                <RadzenCheckBox @bind-Value="@Model.PeriodicPingCheck" />
+            </RadzenFieldset>
+
+            <RadzenButton Text="Delete Address" ButtonStyle="ButtonStyle.Warning" Click="ShowDeleteConfirmation" />
+            @if (alertVisible)
+            {
+                <RadzenAlert>
+                    Are you sure you want to delete this address?
+                    @if (Model.DeviceAddrId != 0)
+                    {
+                        <span>Warning! Data will be deleted from the database.</span>
+                    }
+                </RadzenAlert>
+                <RadzenButton Text="Confirm" ButtonStyle="ButtonStyle.Danger" Click="Delete" />
+            }
+        </RadzenStack>
+    </RadzenCard>
+}
+@code {
+    [Parameter] public DeviceAddr Model { get; set; } = new DeviceAddr();
+    [Parameter] public EventCallback<DeviceAddr> ModelChanged { get; set; }
+    [Parameter] public EventCallback<DeviceAddr> DeleteConfirmed { get; set; }
+
+    bool alertVisible = false;
+    bool password = true;
+    void TogglePassword()
+    {
+        password = !password;
+    }
+
+    void ShowDeleteConfirmation()
+    {
+        alertVisible = true;
+    }
+    void Delete()
+    {
+        alertVisible = false;
+        DeleteConfirmed.InvokeAsync(Model);
+    }
+}

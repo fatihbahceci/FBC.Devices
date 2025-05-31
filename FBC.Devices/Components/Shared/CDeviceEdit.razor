@@ -1,0 +1,96 @@
+﻿@namespace FBC.Devices.Components.Shared
+@inject DeviceDB db
+@inject Radzen.DialogService dialogService
+@inject NotificationService NTF
+@if (Model != null)
+{
+    <RadzenStack Orientation="Orientation.Vertical">
+        <RadzenStack Orientation="Orientation.Horizontal">
+            <RadzenFormField AllowFloatingLabel="false" Text="Name" Style="width: 50%">
+                <RadzenTextBox @bind-Value="@Model.Name" />
+            </RadzenFormField>
+            <RadzenFormField AllowFloatingLabel="false" Text="Description" Style="width: 50%">
+                <RadzenTextBox @bind-Value="@Model.Description" />
+            </RadzenFormField>
+        </RadzenStack>
+        <RadzenFormField AllowFloatingLabel="false" Text="DeviceGroup">
+            <RadzenDropDown @bind-Value="@Model.DeviceGroupId" Data="@db.DeviceGroups.GetList(true)" TextProperty="Name" ValueProperty="DeviceGroupId" />
+        </RadzenFormField>
+        <RadzenFormField AllowFloatingLabel="false" Text="DeviceType">
+            <RadzenDropDown @bind-Value="@Model.DeviceTypeId" Data="@db.DeviceTypes.GetList(true)" TextProperty="Name" ValueProperty="DeviceTypeId" />
+        </RadzenFormField>
+        <RadzenFormField AllowFloatingLabel="false" Text="DeviceModel">
+            <RadzenTextBox @bind-Value="@Model.DeviceModel" />
+        </RadzenFormField>
+        <RadzenFormField AllowFloatingLabel="false" Text="SerialNumber">
+            <RadzenTextBox @bind-Value="@Model.SerialNumber" />
+        </RadzenFormField>
+        <RadzenFormField AllowFloatingLabel="false" Text="Location">
+            <RadzenTextBox @bind-Value="@Model.Location" />
+        </RadzenFormField>
+        <RadzenFormField AllowFloatingLabel="false" Text="Note">
+            <RadzenTextArea @bind-Value="@Model.Note" />
+        </RadzenFormField>
+        <RadzenFieldset>
+            <RadzenLabel Text="IsActive" />
+            <RadzenCheckBox @bind-Value="@Model.IsActive" />
+        </RadzenFieldset>
+        <RadzenStack Orientation="Orientation.Vertical">
+            <h3>Device Addresses</h3>
+            @if (Model.DeviceAddresses?.Count > 0)
+            {
+                for (int i = 0; i < Model.DeviceAddresses.Count; i++)
+                {
+                    <h4>Address #@i</h4>
+                    <CAddressEdit @bind-Model="Model.DeviceAddresses[i]" DeleteConfirmed="DeleteConfirmed" />
+                }
+            }
+            <RadzenButton Text="Add Address" Click="AddNewAddress" />
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+            <RadzenButton Text="Submit" Click="()=>Submit(Model)" />
+            <RadzenButton Text="Close" Click="Close" />
+        </RadzenStack>
+    </RadzenStack>
+}
+@code {
+    [Parameter] public Device Model { get; set; } = new Device();
+    [Parameter] public EventCallback<Device> ModelChanged { get; set; }
+
+    private async Task Submit(Device model)
+    {
+        try{
+            db.Devices.AddOrUpdateData(model);
+            // await ModelChanged.InvokeAsync(model);
+            dialogService.Close(true);
+        }
+        catch (Exception exc)
+        {
+            NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+        }
+    }
+    private async Task Close()
+    {
+        dialogService.Close(false);
+    }
+    private void AddNewAddress()
+    {
+        if (Model.DeviceAddresses == null)
+        {
+            Model.DeviceAddresses = new();
+        }
+        Model.DeviceAddresses.Add(new DeviceAddr());
+    }
+    private void DeleteConfirmed(DeviceAddr addr)
+    {
+        if (addr.DeviceAddrId > 0)
+        {
+            db.DeviceAddresses.DeleteData(addr);
+            Model.DeviceAddresses.Remove(addr);
+        }
+        else
+        {
+            Model.DeviceAddresses.Remove(addr);
+        }
+    }
+}

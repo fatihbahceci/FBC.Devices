@@ -1,0 +1,144 @@
+﻿@attribute [Route(C.NAV.Edit.AddrTypeList)]
+@inject DeviceDB db
+@inject NotificationService NTF
+@inject DialogService DialogService
+<PageTitle>Address Types</PageTitle>
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" Gap="1rem" class="rz-p-sm-12">
+    <RadzenFormField AllowFloatingLabel="false" Text="Name">
+        <RadzenTextBox @bind-Value="@current.Name" />
+    </RadzenFormField>
+    <RadzenButton Text="@GetButtonText()" Click="()=> AddOrUpdate(null)" />
+</RadzenStack>
+<RadzenDataGrid @ref="grid" Count="@(data?.NonFilteredCount ?? 0)" Data="@data?.Data"
+                TItem="AddrType"
+                LoadData="@LoadData"
+                AllowSorting="true"
+                AllowFiltering="true"
+                AllowColumnPicking="false"
+                AllowPaging="true"
+                PagerHorizontalAlign="HorizontalAlign.Center"
+                PageSizeOptions="new int[]{10,20,50,100,500}"
+                PagerPosition="PagerPosition.TopAndBottom"
+                PageSize="10"
+                ShowPagingSummary="true">
+    <Columns>
+        <RadzenDataGridColumn TItem="AddrType" Property="AddrTypeId" Title="Id" Pickable="false" Width="100px" />
+        <RadzenDataGridColumn TItem="AddrType" Property="Name" Title="Name" Pickable="false" />
+@*         <RadzenDataGridColumn TItem="AddrType" Property="TCKNo" Title="TCKNo" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="OncekiSoyadi" Title="OncekiSoyadi" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="BabaAdi" Title="BabaAdi" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="AnneAdi" Title="AnneAdi" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="NufusaKayitliIl" Title="NufusaKayitliIl" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="DogumYeri" Title="DogumYeri" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="DogumTarihi" Title="DogumTarihi" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="Cinsiyet" Title="Cinsiyet" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="MedeniHali" Title="MedeniHali" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="SicilNo" Title="SicilNo" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="UyelikAktif" Title="UyelikAktif" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="VergiDairesi" Title="VergiDairesi" Pickable="true" Visible="false" />
+        <RadzenDataGridColumn TItem="AddrType" Property="VergiNo" Title="VergiNo" Pickable="true" Visible="false" /> *@
+
+        <RadzenDataGridColumn TItem="AddrType" Title="Options" Pickable="false">
+            <Template Context="item">
+                <RadzenSplitButton Text="Edit" Click="(s) =>Choose(s?.Value , item)">
+                    <ChildContent>
+                        <RadzenSplitButtonItem Text="Edit" Value="Edit" />
+                        <RadzenSplitButtonItem Text="Delete" Value="Delete" />
+                    </ChildContent>
+                </RadzenSplitButton>
+            </Template>
+        </RadzenDataGridColumn>
+
+       @*  <RadzenDataGridColumn TItem="AddrType" Title="Options" Pickable="false">
+            <Template Context="item">
+                <RadzenSplitButton Text="Görüntüle" Click="(s) =>Nav.NavigateTo((s?.Value ?? C.NAV.Uyeler.Ac) + item.AddrTypeId)">
+                    <ChildContent>
+                        <RadzenSplitButtonItem Text="Görüntüle" Value="@C.NAV.Uyeler.Ac" />
+                        <RadzenSplitButtonItem Text="Sil" Value="@C.NAV.Uyeler.Sil" />
+                        <RadzenSplitButtonItem Text="Düzenle" Value="@C.NAV.Uyeler.Duzenle" />
+                    </ChildContent>
+                </RadzenSplitButton>
+            </Template>
+        </RadzenDataGridColumn> *@
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    RadzenDataGrid<AddrType>? grid;
+    private DataList<AddrType>? data;
+    private AddrType current = new AddrType();
+    private string GetButtonText()
+    {
+        return current?.AddrTypeId > 0 ? "Update" : "Add";
+    }
+
+    private void AddOrUpdate(DialogService? ds)
+    {
+        try
+        {
+            db.AddrTypes.AddOrUpdateData(current);
+            current = new AddrType();
+            grid?.Reload();
+            ds?.Close();
+            NTF.Notify(NotificationSeverity.Success, "Success!", "Data saved successfully!");
+        }
+        catch (Exception exc)
+        {
+            NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+        }
+    }
+
+    private async Task Choose(string? act, AddrType item)
+    {
+        if (string.IsNullOrEmpty(act) || act == "Edit")
+        {
+            current = item;
+            var result = await DialogService.OpenAsync("Edit", ds =>
+    @<RadzenStack Gap="1.5rem">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" Gap="1rem" class="rz-p-sm-12">
+            <RadzenFormField AllowFloatingLabel="false" Text="Name">
+                <RadzenTextBox @bind-Value="@current.Name" />
+            </RadzenFormField>
+            <RadzenButton Text="@GetButtonText()" Click="()=> AddOrUpdate(ds)" />
+        </RadzenStack>
+    </RadzenStack>
+    );
+            current = new AddrType();
+        }
+        else if (act == "Delete")
+        {
+            var r = await DialogService.Confirm("Are you sure?", "Delete Confirmation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+            if (r == true)
+            {
+                try
+                {
+                    db.AddrTypes.DeleteData(item);
+                    grid?.Reload();
+                    NTF.Notify(NotificationSeverity.Success, "Success!", "Data deleted successfully!");
+                }
+                catch (Exception exc)
+                {
+                    NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+                }
+            }
+        }
+    }
+
+    private async Task LoadData(LoadDataArgs args)
+    {
+        try
+        {
+            var r = db.AddrTypes.ToList(new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top));
+            data = new DataList<AddrType>()
+                {
+                    Data = r.Data,
+                    NonFilteredCount = r.NonFilteredCount
+                };
+        }
+        catch (Exception exc)
+        {
+            data = null;
+            NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+        }
+    }
+}
