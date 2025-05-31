@@ -99,13 +99,13 @@ namespace FBC.Devices.Models
         /// <summary>
         /// Other queries call this method first.If it returns null then the calling query also returns null.
         /// </summary>
-        /// <param name="extraParams">For example: UserRights</param>
-        /// <param name="noTracking">
+        /// <param name="noTracking">For example: ("UserRights", ["Admin"]), ("Include", ["Table1", "Table2"])</param>
+        /// <param name="extraParams">
         /// true: give a query read only (for performance and keep data read only)<br />
         /// false: give an edit-open query for updating data
         /// </param>
         /// <returns></returns>
-        protected abstract IQueryable<TDataTable> getBaseQuery(bool noTracking, object extraParams = null);
+        protected abstract IQueryable<TDataTable> getBaseQuery(bool noTracking = true, params (string Key, string[] Values)[] extraParams);
 
         private IQueryable<TDataTable> applyFilter(IQueryable<TDataTable> q, ACGetListRequest r)
         {
@@ -131,7 +131,7 @@ namespace FBC.Devices.Models
         /// <param name="noTracking"></param>
         /// <param name="extraParams"></param>
         /// <returns></returns>
-        public TDataTable FirstOrDefault(ACGetListRequest aq, bool noTracking = true, object extraParams = null)
+        public TDataTable? FirstOrDefault(ACGetListRequest aq, bool noTracking = true, params (string Key, string[] Values)[] extraParams)
         {
             var q = getBaseQuery(noTracking, extraParams);
             q = applyFilter(q, aq);
@@ -146,7 +146,7 @@ namespace FBC.Devices.Models
         /// <param name="noTracking"></param>
         /// <param name="extraParams"></param>
         /// <returns></returns>
-        public TDataTable FirstOrDefault(Expression<Func<TDataTable, bool>> predicate, bool noTracking = true, object extraParams = null)
+        public TDataTable? FirstOrDefault(Expression<Func<TDataTable, bool>> predicate, bool noTracking = true, params (string Key, string[] Values)[] extraParams)
         {
             var q = getBaseQuery(noTracking, extraParams);
             q = q.Where(predicate);
@@ -160,7 +160,7 @@ namespace FBC.Devices.Models
         /// <param name="noTracking"></param>
         /// <param name="extraParams"></param>
         /// <returns></returns>
-        public async Task<TDataTable> FirstOrDefaultAsync(ACGetListRequest aq, bool noTracking = true, object extraParams = null)
+        public async Task<TDataTable?> FirstOrDefaultAsync(ACGetListRequest aq, bool noTracking = true, params (string Key, string[] Values)[] extraParams)
         {
             var q = getBaseQuery(noTracking, extraParams);
             q = applyFilter(q, aq);
@@ -174,7 +174,7 @@ namespace FBC.Devices.Models
         /// <param name="noTracking"></param>
         /// <param name="extraParams"></param>
         /// <returns></returns>
-        public async Task<TDataTable> FirstOrDefaultAsync(Expression<Func<TDataTable, bool>> predicate, bool noTracking = true, object extraParams = null)
+        public async Task<TDataTable?> FirstOrDefaultAsync(Expression<Func<TDataTable, bool>> predicate, bool noTracking = true, params (string Key, string[] Values)[] extraParams)
         {
             var q = getBaseQuery(noTracking, extraParams);
             q = q.Where(predicate);
@@ -186,12 +186,13 @@ namespace FBC.Devices.Models
         /// <param name="e"></param>
         /// <param name="u"></param>
         /// <returns></returns>
-        public List<TDataTable> ToList(Expression<Func<TDataTable, bool>> e, object extraParams = null)
+        public List<TDataTable> ToList(Expression<Func<TDataTable, bool>> e, params (string Key, string[] Values)[] extraParams)
         {
             var q = getBaseQuery(true, extraParams);
             if (q == null)
             {
-                return null;
+                //if query is null, return empty list
+                return new List<TDataTable>();
             }
             else
             {
@@ -200,7 +201,7 @@ namespace FBC.Devices.Models
             }
         }
 
-        public DataList<TDataTable> ToList(ACGetListRequest args, object extraParams = null)
+        public DataList<TDataTable> ToList(ACGetListRequest args, params (string Key, string[] Values)[] extraParams)
         {
             var query = getBaseQuery(true, extraParams);
             if (query != null)
@@ -230,12 +231,12 @@ namespace FBC.Devices.Models
         /// <param name="e"></param>
         /// <param name="extraParams"></param>
         /// <returns></returns>
-        public async Task<List<TDataTable>> ToListAsync(Expression<Func<TDataTable, bool>> e, object extraParams = null)
+        public async Task<List<TDataTable>> ToListAsync(Expression<Func<TDataTable, bool>> e, params (string Key, string[] Values)[] extraParams)
         {
             var q = getBaseQuery(true, extraParams);
             if (q == null)
             {
-                return null;
+                return new List<TDataTable>();
             }
             else
             {

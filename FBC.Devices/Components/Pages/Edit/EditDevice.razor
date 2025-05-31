@@ -71,7 +71,7 @@ else
     {
         if (Id > 0)
         {
-            Model = await db.Devices.FirstOrDefaultAsync(x => x.DeviceId == Id, true, new string[] { nameof(DeviceType), nameof(DeviceGroup), nameof(Device.DeviceAddresses) });
+            Model = await db.Devices.FirstOrDefaultAsync(x => x.DeviceId == Id, true, (C.DBQ.Ex.Include, [nameof(DeviceType), nameof(DeviceGroup), nameof(Device.DeviceAddresses) ]));
         }
         else
         {

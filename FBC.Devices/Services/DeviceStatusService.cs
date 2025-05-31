@@ -39,7 +39,7 @@ namespace FBC.Devices.Services
                 LastSuccessPingTime = isSuccess ? now : (existing != null ? existing.LastSuccessPingTime : DateTime.MinValue)
             };
         }
-        public static DeviceAddressStatus GetDeviceAddressStatus(int deviceAddrId)
+        public static DeviceAddressStatus? GetDeviceAddressStatus(int deviceAddrId)
         {
             if (deviceAddressStatuses.TryGetValue(deviceAddrId, out var status))
             {

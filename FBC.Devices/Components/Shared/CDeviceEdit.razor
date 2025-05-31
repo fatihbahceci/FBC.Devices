@@ -57,7 +57,7 @@
     [Parameter] public Device Model { get; set; } = new Device();
     [Parameter] public EventCallback<Device> ModelChanged { get; set; }
 
-    private async Task Submit(Device model)
+    private void Submit(Device model)
     {
         try{
             db.Devices.AddOrUpdateData(model);
@@ -69,7 +69,7 @@
             NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
         }
     }
-    private async Task Close()
+    private void Close()
     {
         dialogService.Close(false);
     }

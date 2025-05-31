@@ -131,7 +131,7 @@
         {
             var r = db.Devices.ToList(
                 new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top),
-                new string[] { nameof(DeviceType), nameof(DeviceGroup), nameof(Device.DeviceAddresses) }
+                (C.DBQ.Ex.Include, [nameof(DeviceType), nameof(DeviceGroup), nameof(Device.DeviceAddresses)])
             );
             data = new DataList<Device>()
                 {

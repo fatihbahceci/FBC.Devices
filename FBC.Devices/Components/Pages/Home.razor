@@ -7,13 +7,13 @@
 
 <PageTitle>Home</PageTitle>
 <RadzenPager ShowPagingSummary="true"
-             AlwaysVisible="false"
-             PagingSummaryFormat="@pagingSummaryFormat"
-             HorizontalAlign="HorizontalAlign.Right"
-             Count="Count"
-             PageSize="@PageSize"
-             PageNumbersCount="5"
-             PageChanged="@PageChanged" />
+AlwaysVisible="false"
+PagingSummaryFormat="@pagingSummaryFormat"
+HorizontalAlign="HorizontalAlign.Right"
+Count="Count"
+PageSize="@PageSize"
+PageNumbersCount="5"
+PageChanged="@PageChanged" />
 
 <RadzenStack Gap="2rem">
     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="rz-p-4 rz-border-radius-1" Style="border: var(--rz-grid-cell-border);">
@@ -166,13 +166,13 @@
 
 
 <RadzenPager ShowPagingSummary="true"
-             AlwaysVisible="false"
-             PagingSummaryFormat="@pagingSummaryFormat"
-             HorizontalAlign="HorizontalAlign.Right"
-             Count="Count"
-             PageSize="@PageSize"
-             PageNumbersCount="5"
-             PageChanged="@PageChanged" />
+AlwaysVisible="false"
+PagingSummaryFormat="@pagingSummaryFormat"
+HorizontalAlign="HorizontalAlign.Right"
+Count="Count"
+PageSize="@PageSize"
+PageNumbersCount="5"
+PageChanged="@PageChanged" />
 
 @code {
     string pagingSummaryFormat = "Displaying page {0} of {1} (total {2} records)";
@@ -206,7 +206,7 @@
                     FilterValue = "",
                     FilterOperator = FilterOperator.Contains
                 });
-            dataFilter.Filter();
+            await dataFilter.Filter();
         }
     }
 
@@ -238,12 +238,12 @@
         {
             var r = db.Devices.ToList(
                 new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top),
-                new string[] {
+                (C.DBQ.Ex.Include, [
                     nameof(DeviceType),
                     nameof(DeviceGroup),
                     nameof(Device.DeviceAddresses),
                     nameof(Device.DeviceAddresses) + "."+ nameof(AddrType)
-                }
+                ])
             );
             data = new DataList<Device>()
                 {

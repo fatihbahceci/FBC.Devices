@@ -2,6 +2,14 @@
 {
     public class C
     {
+        public static class DBQ
+        {
+            public static class Ex
+            {
+                public const string Include = "Include";
+                public const string UserRights = "UserRights";
+            }
+        }
         public static class NAV
         {
             public const string HomePage = "/";
