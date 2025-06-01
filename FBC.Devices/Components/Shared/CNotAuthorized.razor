@@ -1,0 +1,32 @@
+﻿@namespace FBC.Devices.Components.Shared
+
+<AuthorizeView Context="ruknettin">
+    <Authorized>
+        <h3>Not Authorized</h3>
+        <RadzenText TextStyle="TextStyle.Body1" class="rz-text-center rz-p-4">
+                You are not authorized to view this page. Please contact your administrator.
+            </RadzenText>
+    </Authorized>
+    <NotAuthorized>
+        <h3>Not Authorized</h3>
+
+        @* @if (!ruknettin.User.Identity.IsAuthenticated) *@
+        @* { *@
+            <RadzenText TextStyle="TextStyle.Body1" class="rz-text-center rz-p-4">
+                You must be logged in to view this page.
+            </RadzenText>
+        @* } 
+        else
+        {
+            <RadzenText TextStyle="TextStyle.Body1" class="rz-text-center rz-p-4">
+                You are not authorized to view this page. Please contact your administrator.
+            </RadzenText>
+        }
+        *@
+    </NotAuthorized>
+
+</AuthorizeView>
+
+@code {
+
+}

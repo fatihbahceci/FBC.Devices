@@ -4,60 +4,68 @@
 @inject DeviceDB db
 @inject NavigationManager Nav;
 @inject NotificationService NTF
-@if (Model != null)
-{
-    <RadzenStack Orientation="Orientation.Vertical">
-        <RadzenStack Orientation="Orientation.Horizontal">
-            <RadzenFormField AllowFloatingLabel="false" Text="Name" Style="width: 50%">
-                <RadzenTextBox @bind-Value="@Model.Name" />
-            </RadzenFormField>
-            <RadzenFormField AllowFloatingLabel="false" Text="Description" Style="width: 50%">
-                <RadzenTextBox @bind-Value="@Model.Description" />
-            </RadzenFormField>
-        </RadzenStack>
-        <RadzenFormField AllowFloatingLabel="false" Text="DeviceGroup">
-            <RadzenDropDown @bind-Value="@Model.DeviceGroupId" Data="@db.DeviceGroups.GetList(true)" TextProperty="Name" ValueProperty="DeviceGroupId" />
-        </RadzenFormField>
-        <RadzenFormField AllowFloatingLabel="false" Text="DeviceType">
-            <RadzenDropDown @bind-Value="@Model.DeviceTypeId" Data="@db.DeviceTypes.GetList(true)" TextProperty="Name" ValueProperty="DeviceTypeId" />
-        </RadzenFormField>
-        <RadzenFormField AllowFloatingLabel="false" Text="DeviceModel">
-            <RadzenTextBox @bind-Value="@Model.DeviceModel" />
-        </RadzenFormField>
-        <RadzenFormField AllowFloatingLabel="false" Text="SerialNumber">
-            <RadzenTextBox @bind-Value="@Model.SerialNumber" />
-        </RadzenFormField>
-        <RadzenFormField AllowFloatingLabel="false" Text="Location">
-            <RadzenTextBox @bind-Value="@Model.Location" />
-        </RadzenFormField>
-        <RadzenFormField AllowFloatingLabel="false" Text="Note">
-            <RadzenTextArea @bind-Value="@Model.Note" />
-        </RadzenFormField>
-        <RadzenFieldset>
-            <RadzenLabel Text="IsActive" />
-            <RadzenCheckBox @bind-Value="@Model.IsActive" />
-        </RadzenFieldset>
-        <RadzenStack Orientation="Orientation.Vertical">
-            <h3>Device Addresses</h3>
-            @if (Model.DeviceAddresses?.Count > 0)
-            {
-                for (int i = 0; i < Model.DeviceAddresses.Count; i++)
-                {
-                    <CAddressEdit @bind-Model="Model.DeviceAddresses[i]" DeleteConfirmed="DeleteConfirmed" />
-                }
-            }
-            <RadzenButton Text="Add Address" Click="AddNewAddress" />
-        </RadzenStack>
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
-            <RadzenButton Text="Submit" Click="()=>Submit(Model)" />
-            <RadzenButton Text="Close" Click="Close" />
-        </RadzenStack>
-    </RadzenStack>
-}
-else
-{
-    <p>Loading...</p>
-}
+@* @attribute [Authorize(Roles = C.UserRoles.EditDevices)] *@
+<AuthorizeView Roles="@C.UserRoles.EditDevices">
+    <NotAuthorized>
+        <CNotAuthorized />
+    </NotAuthorized>
+    <Authorized>
+        @if (Model != null)
+        {
+            <RadzenStack Orientation="Orientation.Vertical">
+                <RadzenStack Orientation="Orientation.Horizontal">
+                    <RadzenFormField AllowFloatingLabel="false" Text="Name" Style="width: 50%">
+                        <RadzenTextBox @bind-Value="@Model.Name" />
+                    </RadzenFormField>
+                    <RadzenFormField AllowFloatingLabel="false" Text="Description" Style="width: 50%">
+                        <RadzenTextBox @bind-Value="@Model.Description" />
+                    </RadzenFormField>
+                </RadzenStack>
+                <RadzenFormField AllowFloatingLabel="false" Text="DeviceGroup">
+                    <RadzenDropDown @bind-Value="@Model.DeviceGroupId" Data="@db.DeviceGroups.GetList(true)" TextProperty="Name" ValueProperty="DeviceGroupId" />
+                </RadzenFormField>
+                <RadzenFormField AllowFloatingLabel="false" Text="DeviceType">
+                    <RadzenDropDown @bind-Value="@Model.DeviceTypeId" Data="@db.DeviceTypes.GetList(true)" TextProperty="Name" ValueProperty="DeviceTypeId" />
+                </RadzenFormField>
+                <RadzenFormField AllowFloatingLabel="false" Text="DeviceModel">
+                    <RadzenTextBox @bind-Value="@Model.DeviceModel" />
+                </RadzenFormField>
+                <RadzenFormField AllowFloatingLabel="false" Text="SerialNumber">
+                    <RadzenTextBox @bind-Value="@Model.SerialNumber" />
+                </RadzenFormField>
+                <RadzenFormField AllowFloatingLabel="false" Text="Location">
+                    <RadzenTextBox @bind-Value="@Model.Location" />
+                </RadzenFormField>
+                <RadzenFormField AllowFloatingLabel="false" Text="Note">
+                    <RadzenTextArea @bind-Value="@Model.Note" />
+                </RadzenFormField>
+                <RadzenFieldset>
+                    <RadzenLabel Text="IsActive" />
+                    <RadzenCheckBox @bind-Value="@Model.IsActive" />
+                </RadzenFieldset>
+                <RadzenStack Orientation="Orientation.Vertical">
+                    <h3>Device Addresses</h3>
+                    @if (Model.DeviceAddresses?.Count > 0)
+                    {
+                        for (int i = 0; i < Model.DeviceAddresses.Count; i++)
+                        {
+                            <CAddressEdit @bind-Model="Model.DeviceAddresses[i]" DeleteConfirmed="DeleteConfirmed" />
+                        }
+                    }
+                    <RadzenButton Text="Add Address" Click="AddNewAddress" />
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+                    <RadzenButton Text="Submit" Click="()=>Submit(Model)" />
+                    <RadzenButton Text="Close" Click="Close" />
+                </RadzenStack>
+            </RadzenStack>
+        }
+        else
+        {
+            <p>Loading...</p>
+        }
+    </Authorized>
+</AuthorizeView>
 @code {
     [Parameter]
     public int Id { get; set; }
@@ -71,7 +79,7 @@ else
     {
         if (Id > 0)
         {
-            Model = await db.Devices.FirstOrDefaultAsync(x => x.DeviceId == Id, true, (C.DBQ.Ex.Include, [nameof(DeviceType), nameof(DeviceGroup), nameof(Device.DeviceAddresses) ]));
+            Model = await db.Devices.FirstOrDefaultAsync(x => x.DeviceId == Id, true, (C.DBQ.Ex.Include, [nameof(DeviceType), nameof(DeviceGroup), nameof(Device.DeviceAddresses)]));
         }
         else
         {

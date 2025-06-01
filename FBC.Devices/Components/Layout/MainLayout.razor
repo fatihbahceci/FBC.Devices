@@ -1,24 +1,42 @@
 ﻿@inherits LayoutComponentBase
 <RadzenComponents @rendermode="InteractiveServer" />
 @inject NotificationService NotificationService
+@inject AuthenticationStateProvider mgr
 
 
 <RadzenLayout>
     <RadzenHeader>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
             <RadzenSidebarToggle Click="@(() => sidebar1Expanded = !sidebar1Expanded)" />
-            <RadzenLabel Text="Header" />
+            <RadzenLabel Text="FBC.Devices" />
         </RadzenStack>
     </RadzenHeader>
     <RadzenSidebar @bind-Expanded="@sidebar1Expanded">
         <RadzenPanelMenu>
-            <RadzenPanelMenuItem Text="Home" Icon="home" Path="@C.NAV.HomePage" />
-            <RadzenPanelMenuItem Text="Edit" Icon="edit">
-                <RadzenPanelMenuItem Text="Address Types" Icon="alternate_email" Path="@C.NAV.Edit.AddrTypeList" />
-                <RadzenPanelMenuItem Text="Device Types" Icon="important_devices" Path="@C.NAV.Edit.DeviceTypeList" />
-                <RadzenPanelMenuItem Text="Device Groups" Icon="move_group" Path="@C.NAV.Edit.DeviceGroupList" />
-                <RadzenPanelMenuItem Text="Devices" Icon="devices_other" Path="@C.NAV.Edit.DeviceList" />
-            </RadzenPanelMenuItem>
+            <AuthorizeView Context="usr">
+                <Authorized>
+                    <RadzenPanelMenuItem Text="Home" Icon="home" Path="@C.NAV.HomePage" />
+                    <RadzenPanelMenuItem Text="Edit" Icon="edit">
+                        <AuthorizeView Roles="@C.UserRoles.EditDeviceAddrTypes">
+                            <RadzenPanelMenuItem Text="Address Types" Icon="alternate_email" Path="@C.NAV.Edit.AddrTypeList" />
+                        </AuthorizeView>
+                        <AuthorizeView Roles="@C.UserRoles.EditDeviceAddrTypes">
+                            <RadzenPanelMenuItem Text="Device Types" Icon="important_devices" Path="@C.NAV.Edit.DeviceTypeList" />
+                        </AuthorizeView>
+                        <AuthorizeView Roles="@C.UserRoles.EditDeviceAddrTypes">
+                            <RadzenPanelMenuItem Text="Device Groups" Icon="move_group" Path="@C.NAV.Edit.DeviceGroupList" />
+                        </AuthorizeView>
+                        <AuthorizeView Roles="@C.UserRoles.EditDeviceAddrTypes">
+                            <RadzenPanelMenuItem Text="Devices" Icon="devices_other" Path="@C.NAV.Edit.DeviceList" />
+                        </AuthorizeView>
+                    </RadzenPanelMenuItem>
+                    <RadzenPanelMenuItem Text="Logout" Icon="logout" Click="Logout"  />
+
+                </Authorized>
+                <NotAuthorized>
+                    <RadzenPanelMenuItem Text="Login" Icon="login" Path="@C.NAV.Login" />
+                </NotAuthorized>
+            </AuthorizeView>
         </RadzenPanelMenu>
         <div class="rz-p-4">
             Sidebar
@@ -45,4 +63,10 @@
 </div>
 @code {
     bool sidebar1Expanded = true;
+
+    async Task Logout()
+    {
+        (mgr as FBC.Devices.Services.FBCAuthenticationStateProvider)!.Logout();
+        await Task.CompletedTask;
+    }
 }

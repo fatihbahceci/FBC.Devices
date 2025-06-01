@@ -5,55 +5,61 @@
 @inject DeviceDB db
 @inject NotificationService NTF
 @inject DialogService DialogService
-<PageTitle>Devices</PageTitle>
+@* @attribute [Authorize(Roles = C.UserRoles.EditDevices)] *@
+<AuthorizeView Roles="@C.UserRoles.EditDevices">
+    <NotAuthorized>
+        <CNotAuthorized />
+    </NotAuthorized>
+    <Authorized>
+        <PageTitle>Devices</PageTitle>
 
-<RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="1rem" class="rz-p-sm-12">
-    <RadzenFormField AllowFloatingLabel="false" Text="Name" Style="width: 30%">
-        <RadzenTextBox @bind-Value="@current.Name" />
-    </RadzenFormField>
-    <RadzenFormField AllowFloatingLabel="false" Text="DeviceGroup" Style="width: 25%">
-        <RadzenDropDown @bind-Value="@current.DeviceGroupId" Data="@db.DeviceGroups.GetList(true)" TextProperty="Name" ValueProperty="DeviceGroupId" />
-    </RadzenFormField>
-    <RadzenFormField AllowFloatingLabel="false" Text="DeviceType" Style="width: 25%">
-        <RadzenDropDown @bind-Value="@current.DeviceTypeId" Data="@db.DeviceTypes.GetList(true)" TextProperty="Name" ValueProperty="DeviceTypeId" />
-    </RadzenFormField>
-    <RadzenButton Text="@GetButtonText()" Click="()=> AddOrUpdate(null)" />
-</RadzenStack>
-<RadzenDataGrid @ref="grid" Count="@(data?.NonFilteredCount ?? 0)" Data="@data?.Data"
-                TItem="Device"
-                LoadData="@LoadData"
-                AllowSorting="true"
-                AllowFiltering="true"
-                AllowColumnPicking="true"
-                AllowPaging="true"
-                PagerHorizontalAlign="HorizontalAlign.Center"
-                PageSizeOptions="new int[]{10,20,50,100,500}"
-                PagerPosition="PagerPosition.TopAndBottom"
-                PageSize="10"
-                ShowPagingSummary="true">
-    <Columns>
-        <RadzenDataGridColumn TItem="Device" Property="DeviceId" Title="Id" Pickable="false" Width="100px" />
-        <RadzenDataGridColumn TItem="Device" Property="Name" Title="Name" Pickable="false" />
-        <RadzenDataGridColumn TItem="Device" Property="Description" Title="Description" Pickable="true" />
-        <RadzenDataGridColumn TItem="Device" Property="DeviceGroup.Name" Title="Device Group" Pickable="true" />
-        <RadzenDataGridColumn TItem="Device" Property="DeviceType.Name" Title="Device Type" Pickable="true" />
-        <RadzenDataGridColumn TItem="Device" Property="DeviceModel" Title="Device Model" Pickable="true" />
-        <RadzenDataGridColumn TItem="Device" Property="SerialNumber" Title="S/N" Pickable="true" />
-        <RadzenDataGridColumn TItem="Device" Property="Location" Title="Location" Pickable="true" Visible="false" />
-        <RadzenDataGridColumn TItem="Device" Property="Note" Title="Note" Pickable="true" Visible="false" />
-        <RadzenDataGridColumn TItem="Device" Property="IsActive" Title="IsActive" Pickable="false" />
+        <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="1rem" class="rz-p-sm-12">
+            <RadzenFormField AllowFloatingLabel="false" Text="Name" Style="width: 30%">
+                <RadzenTextBox @bind-Value="@current.Name" />
+            </RadzenFormField>
+            <RadzenFormField AllowFloatingLabel="false" Text="DeviceGroup" Style="width: 25%">
+                <RadzenDropDown @bind-Value="@current.DeviceGroupId" Data="@db.DeviceGroups.GetList(true)" TextProperty="Name" ValueProperty="DeviceGroupId" />
+            </RadzenFormField>
+            <RadzenFormField AllowFloatingLabel="false" Text="DeviceType" Style="width: 25%">
+                <RadzenDropDown @bind-Value="@current.DeviceTypeId" Data="@db.DeviceTypes.GetList(true)" TextProperty="Name" ValueProperty="DeviceTypeId" />
+            </RadzenFormField>
+            <RadzenButton Text="@GetButtonText()" Click="()=> AddOrUpdate(null)" />
+        </RadzenStack>
+        <RadzenDataGrid @ref="grid" Count="@(data?.NonFilteredCount ?? 0)" Data="@data?.Data"
+                        TItem="Device"
+                        LoadData="@LoadData"
+                        AllowSorting="true"
+                        AllowFiltering="true"
+                        AllowColumnPicking="true"
+                        AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSizeOptions="new int[]{10,20,50,100,500}"
+                        PagerPosition="PagerPosition.TopAndBottom"
+                        PageSize="10"
+                        ShowPagingSummary="true">
+            <Columns>
+                <RadzenDataGridColumn TItem="Device" Property="DeviceId" Title="Id" Pickable="false" Width="100px" />
+                <RadzenDataGridColumn TItem="Device" Property="Name" Title="Name" Pickable="false" />
+                <RadzenDataGridColumn TItem="Device" Property="Description" Title="Description" Pickable="true" />
+                <RadzenDataGridColumn TItem="Device" Property="DeviceGroup.Name" Title="Device Group" Pickable="true" />
+                <RadzenDataGridColumn TItem="Device" Property="DeviceType.Name" Title="Device Type" Pickable="true" />
+                <RadzenDataGridColumn TItem="Device" Property="DeviceModel" Title="Device Model" Pickable="true" />
+                <RadzenDataGridColumn TItem="Device" Property="SerialNumber" Title="S/N" Pickable="true" />
+                <RadzenDataGridColumn TItem="Device" Property="Location" Title="Location" Pickable="true" Visible="false" />
+                <RadzenDataGridColumn TItem="Device" Property="Note" Title="Note" Pickable="true" Visible="false" />
+                <RadzenDataGridColumn TItem="Device" Property="IsActive" Title="IsActive" Pickable="false" />
 
 
-        <RadzenDataGridColumn TItem="Device" Title="Options" Pickable="false" Width="150px">
-            <Template Context="item">
-                <RadzenSplitButton Text="Edit" Click="(s) =>Choose(s?.Value , item)">
-                    <ChildContent>
-                        <RadzenSplitButtonItem Text="Edit" Value="Edit" />
-                        <RadzenSplitButtonItem Text="Delete" Value="Delete" />
-                    </ChildContent>
-                </RadzenSplitButton>
-            </Template>
-        </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Device" Title="Options" Pickable="false" Width="150px">
+                    <Template Context="item">
+                        <RadzenSplitButton Text="Edit" Click="(s) =>Choose(s?.Value , item)">
+                            <ChildContent>
+                                <RadzenSplitButtonItem Text="Edit" Value="Edit" />
+                                <RadzenSplitButtonItem Text="Delete" Value="Delete" />
+                            </ChildContent>
+                        </RadzenSplitButton>
+                    </Template>
+                </RadzenDataGridColumn>
 
        @*  <RadzenDataGridColumn TItem="Device" Title="Options" Pickable="false">
             <Template Context="item">
@@ -66,9 +72,10 @@
                 </RadzenSplitButton>
             </Template>
         </RadzenDataGridColumn> *@
-    </Columns>
-</RadzenDataGrid>
-
+            </Columns>
+        </RadzenDataGrid>
+    </Authorized>
+</AuthorizeView>
 @code {
     RadzenDataGrid<Device>? grid;
     private DataList<Device>? data;
