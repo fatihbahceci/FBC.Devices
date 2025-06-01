@@ -18,45 +18,28 @@ namespace FBC.Devices.DBModels.Helpers
             db.AddrTypes.Remove(item);
         }
 
-        protected override IQueryable<AddrType> getBaseQuery(bool noTracking = true, params (string Key, string[] Values)[] extraParams)
+        protected override IQueryable<AddrType> getBaseQuery(params (string Key, string[] Values)[] extraParams)
         {
-            var basex = noTracking ?
-                db.AddrTypes.AsNoTracking().AsQueryable() :
-                db.AddrTypes.AsQueryable();
-            foreach (var param in extraParams)
-            {
-                switch (param.Key)
-                {
-                    case C.DBQ.Ex.Include:
-                        if (param.Values != null && param.Values.Length > 0)
-                        {
-                            foreach (var i in param.Values)
-                            {
-                                basex = basex.Include(i);
-                            }
-                        }
-                        break;
-                    default:
-                        throw new ArgumentException($"Unknown parameter key: {param.Key}");
-                }
-            }
-            //.Include(x => x.Kariyer);
-            return basex;
-        }
-
-        protected override bool IsNewData(AddrType item)
-        {
-            return item.AddrTypeId <= 0;
+            return db.AddrTypes.AsQueryable();
         }
 
         protected override void UpdateDataFor(AddrType item)
         {
-            db.AddrTypes.Update(item);
+            //db.AddrTypes.Update(item);
+            var exists = db.AddrTypes.FirstOrDefault(x => x.AddrTypeId == item.AddrTypeId);
+            if (exists != null)
+            {
+                db.Entry(exists).CurrentValues.SetValues(item);
+            }
+            else
+            {
+                throw new ArgumentNullException("All", "Not found (Update -> AddrTypes)");
+            }
         }
 
         public List<AddrType> GetList(bool withEmpty)
         {
-            var ret = getBaseQuery(true).ToList();
+            var ret = CreateBaseQuery(true).ToList();
             if (withEmpty)
             {
                 ret.Insert(0, new AddrType() { AddrTypeId = 0, Name = "<Not Selected>" });

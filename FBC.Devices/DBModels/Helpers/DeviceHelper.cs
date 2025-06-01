@@ -26,36 +26,11 @@ namespace FBC.Devices.DBModels.Helpers
             db.Devices.RemoveRange(db.Devices.Where(x => x.DeviceId == item.DeviceId));
         }
 
-        protected override IQueryable<Device> getBaseQuery(bool noTracking = true, params (string Key, string[] Values)[] extraParams)
+        protected override IQueryable<Device> getBaseQuery( params (string Key, string[] Values)[] extraParams)
         {
-            var basex = noTracking ?
-                db.Devices.AsNoTracking().AsQueryable() :
-                db.Devices.AsQueryable();
-            foreach (var param in extraParams)
-            {
-                switch (param.Key)
-                {
-                    case C.DBQ.Ex.Include:
-                        if (param.Values != null && param.Values.Length > 0)
-                        {
-                            foreach (var i in param.Values)
-                            {
-                                basex = basex.Include(i);
-                            }
-                        }
-                        break;
-                    default:
-                        throw new ArgumentException($"Unknown parameter key: {param.Key}");
-                }
-            }
-            //.Include(x => x.Kariyer);
-            return basex;
+            return db.Devices.AsQueryable();
         }
 
-        protected override bool IsNewData(Device item)
-        {
-            return item.DeviceId <= 0;
-        }
 
         protected override void UpdateDataFor(Device item)
         {
@@ -71,7 +46,7 @@ namespace FBC.Devices.DBModels.Helpers
             var exist = db.Devices.Find(item.DeviceId);
             if (exist == null)
             {
-                throw new ArgumentNullException("All", "Not found (Update)");
+                throw new ArgumentNullException("All", "Not found (Update -> Devices)");
             }
             db.Entry(exist).CurrentValues.SetValues(item);
         }

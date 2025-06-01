@@ -38,7 +38,9 @@ namespace FBC.Devices.Models
     }
 
 
-    public abstract class APIDBContextHelper<TDataTable, TDatabase> where TDatabase : DbContext, new()
+    public abstract class APIDBContextHelper<TDataTable, TDatabase>
+        where TDataTable : class
+        where TDatabase : DbContext, new()
     {
         private TDatabase _db;
 
@@ -99,13 +101,54 @@ namespace FBC.Devices.Models
         /// <summary>
         /// Other queries call this method first.If it returns null then the calling query also returns null.
         /// </summary>
-        /// <param name="noTracking">For example: ("UserRights", ["Admin"]), ("Include", ["Table1", "Table2"])</param>
         /// <param name="extraParams">
+        /// For example: ("UserRights", ["Admin"]))
+        /// </param>
+        /// <returns></returns>
+        protected abstract IQueryable<TDataTable> getBaseQuery((string Key, string[] Values)[] extraParams);
+        /// <summary>
+        /// Creates a base query for the data table.
+        /// </summary>
+        /// <param name="noTracking">
         /// true: give a query read only (for performance and keep data read only)<br />
         /// false: give an edit-open query for updating data
         /// </param>
+        /// <param name="extraParams">
+        /// For example: ("UserRights", ["Admin"]), ("Include", ["Table1", "Table2"])
+        /// </param>
         /// <returns></returns>
-        protected abstract IQueryable<TDataTable> getBaseQuery(bool noTracking = true, params (string Key, string[] Values)[] extraParams);
+        protected IQueryable<TDataTable> CreateBaseQuery(bool noTracking = true, params (string Key, string[] Values)[] extraParams)
+        {
+            var query = getBaseQuery(extraParams.Where(x => x.Key != C.DBQ.Ex.Include).ToArray());
+            if (query == null)
+            {
+                //if query is null, return empty query
+                return Enumerable.Empty<TDataTable>().AsQueryable();
+            }
+            foreach (var param in extraParams)
+            {
+                switch (param.Key)
+                {
+                    case C.DBQ.Ex.Include:
+                        if (param.Values != null && param.Values.Length > 0)
+                        {
+                            foreach (var i in param.Values)
+                            {
+                                query = query.Include(i);
+                            }
+                        }
+                        break;
+                    //default:
+                    //    throw new ArgumentException($"Unknown parameter key: {param.Key}");
+                }
+            }
+
+            if (noTracking)
+            {
+                query = query.AsNoTracking();
+            }
+            return query;
+        }
 
         private IQueryable<TDataTable> applyFilter(IQueryable<TDataTable> q, ACGetListRequest r)
         {
@@ -128,12 +171,18 @@ namespace FBC.Devices.Models
         /// 
         /// </summary>
         /// <param name="aq"></param>
-        /// <param name="noTracking"></param>
-        /// <param name="extraParams"></param>
+        /// <param name="noTracking">
+        /// true: give a query read only (for performance and keep data read only)<br />
+        /// false: give an edit-open query for updating data
+        /// </param>
+        /// <param name="extraParams">
+        /// For example: ("UserRights", ["Admin"]), ("Include", ["Table1", "Table2"])
+        /// </param>
+
         /// <returns></returns>
         public TDataTable? FirstOrDefault(ACGetListRequest aq, bool noTracking = true, params (string Key, string[] Values)[] extraParams)
         {
-            var q = getBaseQuery(noTracking, extraParams);
+            var q = CreateBaseQuery(noTracking, extraParams);
             q = applyFilter(q, aq);
             return q.FirstOrDefault();
         }
@@ -143,12 +192,17 @@ namespace FBC.Devices.Models
         /// 
         /// </summary>
         /// <param name="predicate"></param>
-        /// <param name="noTracking"></param>
-        /// <param name="extraParams"></param>
+        /// <param name="noTracking">
+        /// true: give a query read only (for performance and keep data read only)<br />
+        /// false: give an edit-open query for updating data
+        /// </param>
+        /// <param name="extraParams">
+        /// For example: ("UserRights", ["Admin"]), ("Include", ["Table1", "Table2"])
+        /// </param>
         /// <returns></returns>
         public TDataTable? FirstOrDefault(Expression<Func<TDataTable, bool>> predicate, bool noTracking = true, params (string Key, string[] Values)[] extraParams)
         {
-            var q = getBaseQuery(noTracking, extraParams);
+            var q = CreateBaseQuery(noTracking, extraParams);
             q = q.Where(predicate);
             return q.FirstOrDefault();
         }
@@ -157,12 +211,17 @@ namespace FBC.Devices.Models
         /// 
         /// </summary>
         /// <param name="aq"></param>
-        /// <param name="noTracking"></param>
-        /// <param name="extraParams"></param>
+        /// <param name="noTracking">
+        /// true: give a query read only (for performance and keep data read only)<br />
+        /// false: give an edit-open query for updating data
+        /// </param>
+        /// <param name="extraParams">
+        /// For example: ("UserRights", ["Admin"]), ("Include", ["Table1", "Table2"])
+        /// </param>
         /// <returns></returns>
         public async Task<TDataTable?> FirstOrDefaultAsync(ACGetListRequest aq, bool noTracking = true, params (string Key, string[] Values)[] extraParams)
         {
-            var q = getBaseQuery(noTracking, extraParams);
+            var q = CreateBaseQuery(noTracking, extraParams);
             q = applyFilter(q, aq);
             return await q.FirstOrDefaultAsync();
         }
@@ -171,12 +230,17 @@ namespace FBC.Devices.Models
         /// 
         /// </summary>
         /// <param name="predicate"></param>
-        /// <param name="noTracking"></param>
-        /// <param name="extraParams"></param>
+        /// <param name="noTracking">
+        /// true: give a query read only (for performance and keep data read only)<br />
+        /// false: give an edit-open query for updating data
+        /// </param>
+        /// <param name="extraParams">
+        /// For example: ("UserRights", ["Admin"]), ("Include", ["Table1", "Table2"])
+        /// </param>
         /// <returns></returns>
         public async Task<TDataTable?> FirstOrDefaultAsync(Expression<Func<TDataTable, bool>> predicate, bool noTracking = true, params (string Key, string[] Values)[] extraParams)
         {
-            var q = getBaseQuery(noTracking, extraParams);
+            var q = CreateBaseQuery(noTracking, extraParams);
             q = q.Where(predicate);
             return await q.FirstOrDefaultAsync();
         }
@@ -184,11 +248,13 @@ namespace FBC.Devices.Models
         /// if user not set, results all meters with conditions.
         /// </summary>
         /// <param name="e"></param>
-        /// <param name="u"></param>
+        /// <param name="extraParams">
+        /// For example: ("UserRights", ["Admin"]), ("Include", ["Table1", "Table2"])
+        /// </param>
         /// <returns></returns>
         public List<TDataTable> ToList(Expression<Func<TDataTable, bool>> e, params (string Key, string[] Values)[] extraParams)
         {
-            var q = getBaseQuery(true, extraParams);
+            var q = CreateBaseQuery(true, extraParams);
             if (q == null)
             {
                 //if query is null, return empty list
@@ -200,10 +266,17 @@ namespace FBC.Devices.Models
                 return q.ToList();
             }
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="extraParams">
+        /// For example: ("UserRights", ["Admin"]), ("Include", ["Table1", "Table2"])
+        /// </param>
+        /// <returns></returns>
         public DataList<TDataTable> ToList(ACGetListRequest args, params (string Key, string[] Values)[] extraParams)
         {
-            var query = getBaseQuery(true, extraParams);
+            var query = CreateBaseQuery(true, extraParams);
             if (query != null)
             {
                 var result = new DataList<TDataTable>()
@@ -229,11 +302,13 @@ namespace FBC.Devices.Models
         /// 
         /// </summary>
         /// <param name="e"></param>
-        /// <param name="extraParams"></param>
+        /// <param name="extraParams">
+        /// For example: ("UserRights", ["Admin"]), ("Include", ["Table1", "Table2"])
+        /// </param>
         /// <returns></returns>
         public async Task<List<TDataTable>> ToListAsync(Expression<Func<TDataTable, bool>> e, params (string Key, string[] Values)[] extraParams)
         {
-            var q = getBaseQuery(true, extraParams);
+            var q = CreateBaseQuery(true, extraParams);
             if (q == null)
             {
                 return new List<TDataTable>();

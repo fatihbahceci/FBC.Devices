@@ -1,12 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FBC.Devices.DBModels.Helpers;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-    public class Device
+    public class Device : IHasPrimaryKey
     {
         [Key]
         public int DeviceId { get; set; }
+        public int PrimaryKeyId => DeviceId;
         public string Name { get; set; }
         public string? Description { get; set; }
         [ForeignKey(nameof(DeviceGroup))]

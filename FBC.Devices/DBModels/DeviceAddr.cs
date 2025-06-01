@@ -1,12 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FBC.Devices.DBModels.Helpers;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-    public class DeviceAddr
+    public class DeviceAddr: IHasPrimaryKey
     {
         [Key]
         public int DeviceAddrId { get; set; }
+        public int PrimaryKeyId => DeviceAddrId;
         [ForeignKey(nameof(Device))]
         public int DeviceId { get; set; }
         //public Device? Device { get; set; }

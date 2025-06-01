@@ -88,7 +88,7 @@ else
         }
         catch (Exception exc)
         {
-            NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+            NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message /* + Environment.NewLine + exc.StackTrace */);
         }
     }
     private async Task Close()

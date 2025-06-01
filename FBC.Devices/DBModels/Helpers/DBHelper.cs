@@ -2,7 +2,10 @@
 
 namespace FBC.Devices.DBModels.Helpers
 {
-
+    public interface IHasPrimaryKey
+    {
+        int PrimaryKeyId { get; }
+    }
     public abstract class DBHelper<TDataTable> : APIDBContextHelper<TDataTable, DB> where TDataTable : class
     {
         private DeviceDB manager;
@@ -76,7 +79,14 @@ namespace FBC.Devices.DBModels.Helpers
             DeleteDataFor(item);
             SaveChanges();
         }
-        protected abstract bool IsNewData(TDataTable item);
+        protected bool IsNewData(TDataTable item)
+        {
+            if (item is IHasPrimaryKey hasPrimaryKey)
+            {
+                return hasPrimaryKey.PrimaryKeyId <= 0;
+            }
+            throw new ArgumentException("Item does not implement HasPrimaryKey interface", nameof(item));
+        }
         protected abstract void AddDataFor(TDataTable item);
         protected abstract void UpdateDataFor(TDataTable item);
         protected abstract void DeleteDataFor(TDataTable item);

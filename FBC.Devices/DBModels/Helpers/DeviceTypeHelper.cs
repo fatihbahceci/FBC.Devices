@@ -19,21 +19,22 @@ namespace FBC.Devices.DBModels.Helpers
         }
 
 
-
-
-        protected override bool IsNewData(DeviceType item)
-        {
-            return item.DeviceTypeId <= 0;
-        }
-
         protected override void UpdateDataFor(DeviceType item)
         {
             db.DeviceTypes.Update(item);
+            var exists = db.DeviceTypes.FirstOrDefault(x => x.DeviceTypeId == item.DeviceTypeId);
+            if (exists != null)
+            {
+                db.Entry(exists).CurrentValues.SetValues(item);
+            } else
+            {
+                throw new ArgumentNullException("All", "Not found (Update -> DeviceTypes)");
+            }
         }
 
         public List<DeviceType> GetList(bool withEmpty)
         {
-            var ret = getBaseQuery(true).ToList();
+            var ret = CreateBaseQuery(true).ToList();
             if (withEmpty)
             {
                 ret.Insert(0, new DeviceType() { DeviceTypeId = 0, Name = "<Not Selected>" });
@@ -41,29 +42,9 @@ namespace FBC.Devices.DBModels.Helpers
             return ret;
         }
 
-        protected override IQueryable<DeviceType> getBaseQuery(bool noTracking = true, params (string Key, string[] Values)[] extraParams)
+        protected override IQueryable<DeviceType> getBaseQuery(params (string Key, string[] Values)[] extraParams)
         {
-            var basex = noTracking ?
-                db.DeviceTypes.AsNoTracking().AsQueryable() :
-                db.DeviceTypes.AsQueryable();
-            foreach (var param in extraParams)
-            {
-                switch (param.Key)
-                {
-                    case C.DBQ.Ex.Include:
-                        if (param.Values != null && param.Values.Length > 0)
-                        {
-                            foreach (var i in param.Values)
-                            {
-                                basex = basex.Include(i);
-                            }
-                        }
-                        break;
-                    default:
-                        throw new ArgumentException($"Unknown parameter key: {param.Key}");
-                }
-            }
-            return basex;
+            return  db.DeviceTypes.AsQueryable();
         }
     }
 }
