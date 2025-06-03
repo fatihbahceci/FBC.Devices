@@ -1,0 +1,141 @@
+﻿@attribute [Route(C.NAV.Edit.UserList)]
+
+@inject DeviceDB db
+@inject NotificationService NTF
+@inject DialogService DialogService
+@inject NavigationManager Nav;
+
+@* @attribute [Authorize(Roles = C.UserRoles.SysAdmin)] *@
+<AuthorizeView Roles="@C.UserRoles.SysAdmin">
+    <NotAuthorized>
+        <CNotAuthorized />
+    </NotAuthorized>
+    <Authorized>
+
+
+        <PageTitle>Users</PageTitle>
+        <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="1rem" class="rz-p-sm-12">
+            <RadzenFormField AllowFloatingLabel="false" Text="UserName" Style="width: 30%">
+                <RadzenTextBox @bind-Value="@current.UserName" />
+            </RadzenFormField>
+            <RadzenFormField AllowFloatingLabel="false" Text="NewPassword" Style="width: 30%">
+                <RadzenPassword @bind-Value="@current.NewPassword" />
+            </RadzenFormField>
+            <RadzenFormField AllowFloatingLabel="false" Text="Name" Style="width: 30%">
+                <RadzenTextBox @bind-Value="@current.Name" />
+            </RadzenFormField>
+
+            <RadzenButton Text="Add New User" Click="()=> AddOrUpdate(null)" />
+        </RadzenStack>
+
+
+        <RadzenDataGrid @ref="grid" Count="@(data?.NonFilteredCount ?? 0)" Data="@data?.Data"
+                        TItem="DBUser"
+                        LoadData="@LoadData"
+                        AllowSorting="true"
+                        AllowFiltering="true"
+                        AllowColumnPicking="false"
+                        AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSizeOptions="new int[]{10,20,50,100,500}"
+                        PagerPosition="PagerPosition.TopAndBottom"
+                        PageSize="10"
+                        ShowPagingSummary="true">
+            <Columns>
+                <RadzenDataGridColumn TItem="DBUser" Property="Id" Title="Id" Pickable="false" Width="100px" />
+                <RadzenDataGridColumn TItem="DBUser" Property="UserName" Title="UserName" Pickable="false" Width="100px" />
+                <RadzenDataGridColumn TItem="DBUser" Property="Name" Title="Name" Pickable="false" />
+                <RadzenDataGridColumn TItem="DBUser" Property="IsSysAdmin" Title="IsSysAdmin" Pickable="false" />
+                <RadzenDataGridColumn TItem="DBUser" Title="Options" Pickable="false">
+                    <Template Context="item">
+                        <RadzenSplitButton Text="Edit" Click="(s) =>Choose(s?.Value , item)">
+                            <ChildContent>
+                                <RadzenSplitButtonItem Text="Edit" Value="Edit" />
+                                <RadzenSplitButtonItem Text="Delete" Value="Delete" />
+                            </ChildContent>
+                        </RadzenSplitButton>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+
+
+
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    RadzenDataGrid<DBUser>? grid;
+    private DataList<DBUser>? data;
+    private DBUser current = new DBUser();
+
+    private void AddOrUpdate(DialogService? ds)
+    {
+        try
+        {
+            db.Users.AddData(current);
+            if (!current.IsSysAdmin)
+            {
+                //Redirect to edit page for defining user roles
+                Nav.NavigateTo($"{C.NAV.Edit.EditUser}{current.UserId}?{C.NAV.Params.Redirect}={C.NAV.Edit.UserList}");
+            }
+            else
+            {
+                current = new DBUser();
+                grid?.Reload();
+                ds?.Close();
+                NTF.Notify(NotificationSeverity.Success, "Success!", "Data saved successfully!");
+            }
+        }
+        catch (Exception exc)
+        {
+            NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+        }
+    }
+
+    private async Task Choose(string? act, DBUser item)
+    {
+        if (string.IsNullOrEmpty(act) || act == "Edit")
+        {
+            Nav.NavigateTo($"{C.NAV.Edit.EditUser}{item.UserId}?{C.NAV.Params.Redirect}={C.NAV.Edit.UserList}");
+
+        }
+        else if (act == "Delete")
+        {
+            var r = await DialogService.Confirm("Are you sure?", "Delete Confirmation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+            if (r == true)
+            {
+                try
+                {
+                    db.Users.DeleteData(item);
+                    grid?.Reload();
+                    NTF.Notify(NotificationSeverity.Success, "Success!", "Data deleted successfully!");
+                }
+                catch (Exception exc)
+                {
+                    NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+                }
+            }
+        }
+    }
+
+    private async Task LoadData(LoadDataArgs args)
+    {
+        try
+        {
+            var r = db.Users.ToList(new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top));
+            data = new DataList<DBUser>()
+                {
+                    Data = r.Data,
+                    NonFilteredCount = r.NonFilteredCount
+                };
+            await Task.CompletedTask;
+        }
+        catch (Exception exc)
+        {
+            data = null;
+            NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+        }
+    }
+}

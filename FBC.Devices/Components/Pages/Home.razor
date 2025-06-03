@@ -4,33 +4,38 @@
 @inject DeviceDB db
 @inject NotificationService NTF
 @inject IJSRuntime JS
+@* @attribute [Authorize(Roles = C.UserRoles.ViewDevices)] *@
+<AuthorizeView Roles="@C.UserRoles.ViewDevices">
+    <NotAuthorized>
+        <CNotAuthorized/>
+    </NotAuthorized>
+    <Authorized>
+        <PageTitle>Home</PageTitle>
+        <RadzenPager ShowPagingSummary="true"
+                     AlwaysVisible="false"
+                     PagingSummaryFormat="@pagingSummaryFormat"
+                     HorizontalAlign="HorizontalAlign.Right"
+                     Count="Count"
+                     PageSize="@PageSize"
+                     PageNumbersCount="5"
+                     PageChanged="@PageChanged" />
 
-<PageTitle>Home</PageTitle>
-<RadzenPager ShowPagingSummary="true"
-AlwaysVisible="false"
-PagingSummaryFormat="@pagingSummaryFormat"
-HorizontalAlign="HorizontalAlign.Right"
-Count="Count"
-PageSize="@PageSize"
-PageNumbersCount="5"
-PageChanged="@PageChanged" />
+        <RadzenStack Gap="2rem">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="rz-p-4 rz-border-radius-1" Style="border: var(--rz-grid-cell-border);">
+                <RadzenCheckBox @bind-Value="@auto" Name="auto" />
+                <RadzenLabel Text="Auto filter" Component="auto" class="rz-me-6" />
+                <RadzenButton Text="Apply Filter" Click="@ApplyFilter" Disabled="@auto" Size="ButtonSize.Small" />
+            </RadzenStack>
 
-<RadzenStack Gap="2rem">
-    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="rz-p-4 rz-border-radius-1" Style="border: var(--rz-grid-cell-border);">
-        <RadzenCheckBox @bind-Value="@auto" Name="auto" />
-        <RadzenLabel Text="Auto filter" Component="auto" class="rz-me-6" />
-        <RadzenButton Text="Apply Filter" Click="@ApplyFilter" Disabled="@auto" Size="ButtonSize.Small" />
-    </RadzenStack>
-
-    <RadzenDataFilter @ref="dataFilter" Auto=auto Data="@data?.Data" TItem="Device" ViewChanged=@(view => LoadData())>
-        <Properties>
-            <RadzenDataFilterProperty Property="@nameof(Device.DeviceId)" Title="Device ID" />
-            <RadzenDataFilterProperty Property="@nameof(Device.Name)" Title="Name" />
-            @*             <RadzenDataFilterProperty Property="@nameof(Device.DeviceType.Name)" Title="Device Type" />
+            <RadzenDataFilter @ref="dataFilter" Auto=auto Data="@data?.Data" TItem="Device" ViewChanged=@(view => LoadData())>
+                <Properties>
+                    <RadzenDataFilterProperty Property="@nameof(Device.DeviceId)" Title="Device ID" />
+                    <RadzenDataFilterProperty Property="@nameof(Device.Name)" Title="Name" />
+                    @*             <RadzenDataFilterProperty Property="@nameof(Device.DeviceType.Name)" Title="Device Type" />
             <RadzenDataFilterProperty Property="@nameof(Device.DeviceGroup.Name)" Title="Group" />
  *@            <RadzenDataFilterProperty Property="@nameof(Device.DeviceModel)" Title="Model" />
-            <RadzenDataFilterProperty Property="@nameof(Device.Location)" Title="Device Location" />
-            @*             <RadzenDataFilterProperty Property="Employee.LastName" Title="Employee Last Name" />
+                    <RadzenDataFilterProperty Property="@nameof(Device.Location)" Title="Device Location" />
+                    @*             <RadzenDataFilterProperty Property="Employee.LastName" Title="Employee Last Name" />
             <MyCustomEnumerableDataFilterProperty Property="Employee.Title" Title="Employee Title" FilterValue="@finalSelectedTitles"
                                                     Type="typeof(IEnumerable<string>)" FilterOperator="FilterOperator.Contains">
                 <FilterTemplate>
@@ -41,138 +46,140 @@ PageChanged="@PageChanged" />
             <MyCustomDataFilterProperty Property="@nameof(Order.OrderDate)" Title="Order Date" />
             <RadzenDataFilterProperty Property="@nameof(Order.Freight)" Title="Freight" />
  *@        </Properties>
-    </RadzenDataFilter>
+            </RadzenDataFilter>
 
-</RadzenStack>
+        </RadzenStack>
 
 
 
-<RadzenDataList WrapItems="true" AllowPaging="false" Data="@data?.Data" TItem="Device">
-    <Template Context="device">
-        <RadzenCard Style="width:450px;">
-            <RadzenRow>
-                <RadzenColumn Size="8" class="rz-text-truncate">
-                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">Device Name</RadzenText>
-                </RadzenColumn>
-                <RadzenColumn Size="4" class="rz-text-align-end">
-                    <RadzenLink Path="@($"{C.NAV.Edit.EditDevice}{device.DeviceId}")"><b>Edit</b></RadzenLink>
-                </RadzenColumn>
-            </RadzenRow>
-            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start">
-                @* <RadzenImage Path="@order.Employee?.Photo" Style="width: 80px; height: 80px; border-radius: 50%" AlternateText="@(order.Employee?.FirstName + " " + order.Employee?.LastName)" /> *@
-                <RadzenStack Gap="0">
-                    <RadzenText TextStyle="TextStyle.Body1"><b>@($"[{device.DeviceId:D4}] {device.Name}")</b></RadzenText>
-                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Device Type</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1"><b>@(device.DeviceType?.Name ?? "--")</b></RadzenText>
-                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Group</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1"><b>@(device.DeviceGroup?.Name ?? "--")</b></RadzenText>
-                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Description</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1"><b>@(device.Description ?? "--")</b></RadzenText>
-                </RadzenStack>
-            </RadzenStack>
-            <RadzenAccordion Multiple="true">
-                <Items>
-                    <RadzenAccordionItem Text="Details" Icon="accessibility">
+        <RadzenDataList WrapItems="true" AllowPaging="false" Data="@data?.Data" TItem="Device">
+            <Template Context="device">
+                <RadzenCard Style="width:450px;">
+                    <RadzenRow>
+                        <RadzenColumn Size="8" class="rz-text-truncate">
+                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">Device Name</RadzenText>
+                        </RadzenColumn>
+                        <RadzenColumn Size="4" class="rz-text-align-end">
+                            <RadzenLink Path="@($"{C.NAV.Edit.EditDevice}{device.DeviceId}")"><b>Edit</b></RadzenLink>
+                        </RadzenColumn>
+                    </RadzenRow>
+                    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Start">
+                        @* <RadzenImage Path="@order.Employee?.Photo" Style="width: 80px; height: 80px; border-radius: 50%" AlternateText="@(order.Employee?.FirstName + " " + order.Employee?.LastName)" /> *@
                         <RadzenStack Gap="0">
-                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Model</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body1"><b>@(device.DeviceModel ?? "--")</b></RadzenText>
-                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Serial Number</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body1"><b>@(device.SerialNumber ?? "--")</b></RadzenText>
-                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Location</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body1"><b>@(device.Location ?? "--")</b></RadzenText>
-
+                            <RadzenText TextStyle="TextStyle.Body1"><b>@($"[{device.DeviceId:D4}] {device.Name}")</b></RadzenText>
+                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Device Type</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1"><b>@(device.DeviceType?.Name ?? "--")</b></RadzenText>
+                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Group</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1"><b>@(device.DeviceGroup?.Name ?? "--")</b></RadzenText>
+                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Description</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1"><b>@(device.Description ?? "--")</b></RadzenText>
                         </RadzenStack>
-                    </RadzenAccordionItem>
-                    @if (!string.IsNullOrEmpty(device.Note))
-                    {
-                        <RadzenAccordionItem Text="Notes" Icon="account_balance_wallet">
-                            <pre>@device.Note</pre>
-                        </RadzenAccordionItem>
-                    }
-                    @if (device.DeviceAddresses?.Any() == true)
-                    {
-                        <RadzenAccordionItem Text="Device Addresses" Icon="account_box">
-                            <RadzenStack Gap="10" Orientation="Orientation.Vertical">
+                    </RadzenStack>
+                    <RadzenAccordion Multiple="true">
+                        <Items>
+                            <RadzenAccordionItem Text="Details" Icon="accessibility">
+                                <RadzenStack Gap="0">
+                                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Model</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1"><b>@(device.DeviceModel ?? "--")</b></RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Serial Number</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1"><b>@(device.SerialNumber ?? "--")</b></RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Location</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1"><b>@(device.Location ?? "--")</b></RadzenText>
 
-                                @foreach (var addr in device.DeviceAddresses)
-                                {
-                                    BadgeStyle stStyle = BadgeStyle.Secondary;
-                                    string stText = "DISABLED";
-                                    string lastPing = "--";
-                                    string lastSuccessPing = "--";
-                                    if (device.IsActive && addr.PeriodicPingCheck)
-                                    {
-                                        var st = FBC.Devices.Services.DeviceAddressStatus.GetDeviceAddressStatusOrDefault(addr.DeviceAddrId);
-                                        stStyle = st.IsSuccess ? BadgeStyle.Success : BadgeStyle.Danger;
-                                        stText = st.IsSuccess ? "ACTIVE" : "PASSIVE";
-                                        lastPing = st.LastPingTime == DateTime.MinValue ? "--" : st.LastPingTime.ToString("yyyy-MM-dd HH:mm:ss");
-                                        lastSuccessPing = st.LastSuccessPingTime == DateTime.MinValue ? "--" : st.LastSuccessPingTime.ToString("yyyy-MM-dd HH:mm:ss");
-                                    }
+                                </RadzenStack>
+                            </RadzenAccordionItem>
+                            @if (!string.IsNullOrEmpty(device.Note))
+                            {
+                                <RadzenAccordionItem Text="Notes" Icon="account_balance_wallet">
+                                    <pre>@device.Note</pre>
+                                </RadzenAccordionItem>
+                            }
+                            @if (device.DeviceAddresses?.Any() == true)
+                            {
+                                <RadzenAccordionItem Text="Device Addresses" Icon="account_box">
+                                    <RadzenStack Gap="10" Orientation="Orientation.Vertical">
 
-                                    <RadzenCard>
-                                        <RadzenRow>
-                                            <RadzenColumn Size="8" class="rz-text-truncate">
-                                                <RadzenText TextStyle="TextStyle.Body1"><b>@($"[{addr.AddrType?.Name ?? "??"}] {addr.Addr}")</b></RadzenText>
-                                                <RadzenBadge BadgeStyle="@stStyle" Text=@stText />
-                                            </RadzenColumn>
-                                            <RadzenColumn Size="4" class="rz-text-align-end">
-                                                <RadzenButton Click="() => Ping(addr.Addr)"><b>Ping</b></RadzenButton>
-                                            </RadzenColumn>
-                                        </RadzenRow>
-                                        <RadzenAccordion>
-                                            <Items>
-                                                <RadzenAccordionItem Text="Details">
-                                                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Last Ping</RadzenText>
-                                                    <pre>@lastPing</pre>
-                                                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Last Success Ping</RadzenText>
-                                                    <pre>@lastSuccessPing</pre>
-                                                    @if (!string.IsNullOrEmpty(addr.Password))
-                                                    {
-                                                        <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">User Name</RadzenText>
-                                                        @* <RadzenText TextStyle="TextStyle.Body1"><b>@(addr.Username ?? "--")</b></RadzenText> *@
-                                                        <pre>@(addr.Username ?? "--")</pre>
-                                                    }
-                                                    @if (!string.IsNullOrEmpty(addr.Password))
-                                                    {
-                                                        <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Password</RadzenText>
-                                                        <RadzenButton Click="() => CopyPasswordToClipboard(addr.Password)"><b>Copy Password</b></RadzenButton>
-                                                    }
-                                                </RadzenAccordionItem>
-                                            </Items>
-                                        </RadzenAccordion>
+                                        @foreach (var addr in device.DeviceAddresses)
+                                        {
+                                            BadgeStyle stStyle = BadgeStyle.Secondary;
+                                            string stText = "DISABLED";
+                                            string lastPing = "--";
+                                            string lastSuccessPing = "--";
+                                            if (device.IsActive && addr.PeriodicPingCheck)
+                                            {
+                                                var st = FBC.Devices.Services.DeviceAddressStatus.GetDeviceAddressStatusOrDefault(addr.DeviceAddrId);
+                                                stStyle = st.IsSuccess ? BadgeStyle.Success : BadgeStyle.Danger;
+                                                stText = st.IsSuccess ? "ACTIVE" : "PASSIVE";
+                                                lastPing = st.LastPingTime == DateTime.MinValue ? "--" : st.LastPingTime.ToString("yyyy-MM-dd HH:mm:ss");
+                                                lastSuccessPing = st.LastSuccessPingTime == DateTime.MinValue ? "--" : st.LastSuccessPingTime.ToString("yyyy-MM-dd HH:mm:ss");
+                                            }
 
-                                    </RadzenCard>
-                                }
-                            </RadzenStack>
-                        </RadzenAccordionItem>
-                    }
-                </Items>
-            </RadzenAccordion>
+                                            <RadzenCard>
+                                                <RadzenRow>
+                                                    <RadzenColumn Size="8" class="rz-text-truncate">
+                                                        <RadzenText TextStyle="TextStyle.Body1"><b>@($"[{addr.AddrType?.Name ?? "??"}] {addr.Addr}")</b></RadzenText>
+                                                        <RadzenBadge BadgeStyle="@stStyle" Text=@stText />
+                                                    </RadzenColumn>
+                                                    <RadzenColumn Size="4" class="rz-text-align-end">
+                                                        <RadzenButton Click="() => Ping(addr.Addr)"><b>Ping</b></RadzenButton>
+                                                    </RadzenColumn>
+                                                </RadzenRow>
+                                                <RadzenAccordion>
+                                                    <Items>
+                                                        <RadzenAccordionItem Text="Details">
+                                                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Last Ping</RadzenText>
+                                                            <pre>@lastPing</pre>
+                                                            <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Last Success Ping</RadzenText>
+                                                            <pre>@lastSuccessPing</pre>
+                                                            @if (!string.IsNullOrEmpty(addr.Password))
+                                                            {
+                                                                <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">User Name</RadzenText>
+                                                                @* <RadzenText TextStyle="TextStyle.Body1"><b>@(addr.Username ?? "--")</b></RadzenText> *@
+                                                                <pre>@(addr.Username ?? "--")</pre>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(addr.Password))
+                                                            {
+                                                                <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Password</RadzenText>
+                                                                <RadzenButton Click="() => CopyPasswordToClipboard(addr.Password)"><b>Copy Password</b></RadzenButton>
+                                                            }
+                                                        </RadzenAccordionItem>
+                                                    </Items>
+                                                </RadzenAccordion>
 
-
-
-            <hr style="border: none; background-color: rgba(0,0,0,.2); height: 1px; margin: 1rem 0;" />
-            <RadzenRow>
-                <RadzenColumn Size="8" class="rz-text-truncate">
-                    <b>Device Enabled</b>
-                </RadzenColumn>
-                <RadzenColumn Size="4" class="rz-text-align-end">
-                    <RadzenBadge BadgeStyle="@(device.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)" Text=@(device.IsActive ? "YES" : "NO") />
-                </RadzenColumn>
-            </RadzenRow>
-        </RadzenCard>
-    </Template>
-</RadzenDataList>
+                                            </RadzenCard>
+                                        }
+                                    </RadzenStack>
+                                </RadzenAccordionItem>
+                            }
+                        </Items>
+                    </RadzenAccordion>
 
 
-<RadzenPager ShowPagingSummary="true"
-AlwaysVisible="false"
-PagingSummaryFormat="@pagingSummaryFormat"
-HorizontalAlign="HorizontalAlign.Right"
-Count="Count"
-PageSize="@PageSize"
-PageNumbersCount="5"
-PageChanged="@PageChanged" />
+
+                    <hr style="border: none; background-color: rgba(0,0,0,.2); height: 1px; margin: 1rem 0;" />
+                    <RadzenRow>
+                        <RadzenColumn Size="8" class="rz-text-truncate">
+                            <b>Device Enabled</b>
+                        </RadzenColumn>
+                        <RadzenColumn Size="4" class="rz-text-align-end">
+                            <RadzenBadge BadgeStyle="@(device.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)" Text=@(device.IsActive ? "YES" : "NO") />
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenCard>
+            </Template>
+        </RadzenDataList>
+
+
+        <RadzenPager ShowPagingSummary="true"
+                     AlwaysVisible="false"
+                     PagingSummaryFormat="@pagingSummaryFormat"
+                     HorizontalAlign="HorizontalAlign.Right"
+                     Count="Count"
+                     PageSize="@PageSize"
+                     PageNumbersCount="5"
+                     PageChanged="@PageChanged" />
+    </Authorized>
+</AuthorizeView>
 
 @code {
     string pagingSummaryFormat = "Displaying page {0} of {1} (total {2} records)";

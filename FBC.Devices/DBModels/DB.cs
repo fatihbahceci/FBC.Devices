@@ -10,6 +10,7 @@ namespace FBC.Devices.DBModels
         public DbSet<DeviceGroup> DeviceGroups { get; set; }
         public DbSet<Device> Devices { get; set; }
         public DbSet<DeviceAddr> DeviceAddresses { get; set; }
+        public DbSet<DBUser> SysUsers { get; set; }
 
 
         public string DbPath { get; }
@@ -30,47 +31,34 @@ namespace FBC.Devices.DBModels
             {
                 try
                 {
-                    //if (!File.Exists(db.DbPath))
-                    //{
-                    //    Console.WriteLine("EnsureCreated");
-
-                    //    db.Database.EnsureCreated();
-
-                    //}
-                    //else 
-
-                    //if (db.Database.GetMigrations().Any())
-
-                    //{
                     Console.WriteLine("Begin Migrate");
 
                     db.Database.Migrate();
                     Console.WriteLine("End Migrate");
-                    //} else
-                    //{
-                    //    Console.WriteLine("The database is already up to date.");
-                    //}
 
-                    //if (!db.Users.Any(x => x.IsAdmin == true))
-                    //{
-                    //    Console.WriteLine("AddAdmin");
+                    if (db.SysUsers.Any(x => x.IsSysAdmin) == false)
+                    {
+                        Console.WriteLine("Creating SysAdmin User with default credentials (username: admin, password: admin)");
+                        Console.WriteLine("Please change the password after first login!");
+                        var user = new DBUser()
+                        {
+                            UserName = "admin",
+                            Password = C.Tools.ToMD5("admin"),
+                            IsSysAdmin = true,
+                            Roles = C.UserRoles.SysAdmin,
+                            Name = "System Administrator"
+                        };
+                        user.AdjustData(true);
+                        db.SysUsers.Add(user);
+                        db.SaveChanges();
+                    }
 
-                    //    db.Users.Add(new SysUser()
-                    //    {
-                    //        SysUserName = "admin",
-                    //        SysUserPassword = SysUser.ToMD5("admin"),
-                    //        IsAdmin = true,
-                    //        Name = "System",
-                    //        Surname = "Admin",
-                    //        IsCanEditData = true
-                    //    });
-                    //    db.SaveChanges();
-                    //}
                     if (!db.AddrTypes.Any())
                     {
                         Console.WriteLine("Creating Connection Types");
                         db.AddrTypes.AddRange(new AddrType[]
                         {
+                            new AddrType() { Name = "TCP/IP" },
                             new AddrType() { Name = "HTTP" },
                             new AddrType() { Name = "RTSP" },
                             new AddrType() { Name = "FTP" },
@@ -160,10 +148,10 @@ namespace FBC.Devices.DBModels
             //    .HasForeignKey(d => d.DeviceId)
             //    .OnDelete(DeleteBehavior.NoAction);
 
-    //        modelBuilder.Entity<DeviceAddr>()
-    //.HasOne(x => x.Device)
-    //.WithMany(x => x.DeviceAddresses)
-    //.OnDelete(DeleteBehavior.ClientNoAction);
+            //        modelBuilder.Entity<DeviceAddr>()
+            //.HasOne(x => x.Device)
+            //.WithMany(x => x.DeviceAddresses)
+            //.OnDelete(DeleteBehavior.ClientNoAction);
 
             base.OnModelCreating(modelBuilder);
         }

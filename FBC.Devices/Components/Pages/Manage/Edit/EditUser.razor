@@ -1,0 +1,114 @@
+﻿@attribute [Route(C.NAV.Edit.EditUser + "{Id:int}")]
+@inject DeviceDB db
+@inject NavigationManager Nav;
+@inject NotificationService NTF
+@* @attribute [Authorize(Roles = C.UserRoles.EditDevices)] *@
+<AuthorizeView Roles="@C.UserRoles.SysAdmin">
+    <NotAuthorized>
+        <CNotAuthorized />
+    </NotAuthorized>
+    <Authorized>
+        @if (Model != null)
+        {
+            <RadzenStack Orientation="Orientation.Vertical">
+                <RadzenStack Orientation="Orientation.Horizontal">
+                    <RadzenFormField AllowFloatingLabel="false" Text="UserName" Style="width: 50%">
+                        <RadzenTextBox @bind-Value="@Model.UserName" />
+                    </RadzenFormField>
+                    <RadzenFormField AllowFloatingLabel="false" Text="NewPassword" Style="width: 50%">
+                        <RadzenPassword @bind-Value="@Model.NewPassword" />
+                    </RadzenFormField>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal">
+
+                    <RadzenFieldset AllowFloatingLabel="false" Text="Name" Style="width: 50%">
+                        <RadzenTextBox @bind-Value="@Model.Name" />
+                    </RadzenFieldset>
+                    <RadzenFieldset AllowFloatingLabel="false" Text="IsSysAdmin" Style="width: 30%">
+                        <RadzenLabel Text="IsSysAdmin" />
+                        <RadzenCheckBox @bind-Value="@Model.IsSysAdmin" />
+                    </RadzenFieldset>
+                </RadzenStack>
+                @if (!Model.IsSysAdmin)
+                {
+                    <h2>Roles</h2>
+                    <RadzenCheckBoxList Data="@Roles"
+                                        @bind-Value=@SelectedRoles
+                                        TValue="int"
+                                        TextProperty="Value"
+                                        ValueProperty="Key" />
+                }
+
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+                    <RadzenButton Text="Submit" Click="()=>Submit(Model)" />
+                    <RadzenButton Text="Close" Click="Close" />
+                </RadzenStack>
+            </RadzenStack>
+        }
+        else
+        {
+            <p>Loading...</p>
+        }
+    </Authorized>
+</AuthorizeView>
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = C.NAV.Params.Redirect)]
+    public string? Redirect { get; set; }
+
+    private DBUser? Model;
+    private Dictionary<int, string> Roles = C.UserRoles.AllRolesButSysAdmin.Select((x, Index) => new { x, Index }).ToDictionary(x => x.Index, x => x.x);
+    IEnumerable<int> SelectedRoles = new List<int>();
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            Model = await db.Users.FirstOrDefaultAsync(x => x.UserId == Id);
+            if (Model == null)
+            {
+                NTF.Notify(NotificationSeverity.Error, "Error!", $"User with Id {Id} not found.");
+                await Close();
+            }
+            else
+            {
+                // Initialize roles based on the user's roles
+                SelectedRoles = Roles.Where(x => Model?.GetRoles().Contains(x.Value) ?? false).Select(x => x.Key).ToList();
+            }
+        }
+        else
+        {
+            Model = null;
+        }
+    }
+    private async Task Submit(DBUser model)
+    {
+        try
+        {
+            if (!model.IsSysAdmin)
+            {
+                model.SetRoles(Roles.Where(x => SelectedRoles.Contains(x.Key)).Select(x => x.Value).ToList());
+            }
+            db.Users.AddOrUpdateData(model);
+            await Close();
+        }
+        catch (Exception exc)
+        {
+            NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message /* + Environment.NewLine + exc.StackTrace */);
+        }
+    }
+    private async Task Close()
+    {
+        if (string.IsNullOrEmpty(Redirect))
+        {
+            Nav.NavigateTo(C.NAV.HomePage);
+        }
+        else
+        {
+            Nav.NavigateTo(Redirect);
+        }
+        await Task.CompletedTask;
+    }
+}

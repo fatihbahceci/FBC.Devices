@@ -1,0 +1,156 @@
+﻿@using FBC.Devices.Components.Shared
+@attribute [Route(C.NAV.Edit.DeviceList)]
+@inject NavigationManager Nav;
+
+@inject DeviceDB db
+@inject NotificationService NTF
+@inject DialogService DialogService
+@* @attribute [Authorize(Roles = C.UserRoles.EditDevices)] *@
+<AuthorizeView Roles="@C.UserRoles.EditDevices">
+    <NotAuthorized>
+        <CNotAuthorized />
+    </NotAuthorized>
+    <Authorized>
+        <PageTitle>Devices</PageTitle>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="1rem" class="rz-p-sm-12">
+            <RadzenFormField AllowFloatingLabel="false" Text="Name" Style="width: 30%">
+                <RadzenTextBox @bind-Value="@current.Name" />
+            </RadzenFormField>
+            <RadzenFormField AllowFloatingLabel="false" Text="DeviceGroup" Style="width: 25%">
+                <RadzenDropDown @bind-Value="@current.DeviceGroupId" Data="@db.DeviceGroups.GetList(true)" TextProperty="Name" ValueProperty="DeviceGroupId" />
+            </RadzenFormField>
+            <RadzenFormField AllowFloatingLabel="false" Text="DeviceType" Style="width: 25%">
+                <RadzenDropDown @bind-Value="@current.DeviceTypeId" Data="@db.DeviceTypes.GetList(true)" TextProperty="Name" ValueProperty="DeviceTypeId" />
+            </RadzenFormField>
+            <RadzenButton Text="@GetButtonText()" Click="()=> AddOrUpdate(null)" />
+        </RadzenStack>
+        <RadzenDataGrid @ref="grid" Count="@(data?.NonFilteredCount ?? 0)" Data="@data?.Data"
+                        TItem="Device"
+                        LoadData="@LoadData"
+                        AllowSorting="true"
+                        AllowFiltering="true"
+                        AllowColumnPicking="true"
+                        AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSizeOptions="new int[]{10,20,50,100,500}"
+                        PagerPosition="PagerPosition.TopAndBottom"
+                        PageSize="10"
+                        ShowPagingSummary="true">
+            <Columns>
+                <RadzenDataGridColumn TItem="Device" Property="DeviceId" Title="Id" Pickable="false" Width="100px" />
+                <RadzenDataGridColumn TItem="Device" Property="Name" Title="Name" Pickable="false" />
+                <RadzenDataGridColumn TItem="Device" Property="Description" Title="Description" Pickable="true" />
+                <RadzenDataGridColumn TItem="Device" Property="DeviceGroup.Name" Title="Device Group" Pickable="true" />
+                <RadzenDataGridColumn TItem="Device" Property="DeviceType.Name" Title="Device Type" Pickable="true" />
+                <RadzenDataGridColumn TItem="Device" Property="DeviceModel" Title="Device Model" Pickable="true" />
+                <RadzenDataGridColumn TItem="Device" Property="SerialNumber" Title="S/N" Pickable="true" />
+                <RadzenDataGridColumn TItem="Device" Property="Location" Title="Location" Pickable="true" Visible="false" />
+                <RadzenDataGridColumn TItem="Device" Property="Note" Title="Note" Pickable="true" Visible="false" />
+                <RadzenDataGridColumn TItem="Device" Property="IsActive" Title="IsActive" Pickable="false" />
+
+
+                <RadzenDataGridColumn TItem="Device" Title="Options" Pickable="false" Width="150px">
+                    <Template Context="item">
+                        <RadzenSplitButton Text="Edit" Click="(s) =>Choose(s?.Value , item)">
+                            <ChildContent>
+                                <RadzenSplitButtonItem Text="Edit" Value="Edit" />
+                                <RadzenSplitButtonItem Text="Delete" Value="Delete" />
+                            </ChildContent>
+                        </RadzenSplitButton>
+                    </Template>
+                </RadzenDataGridColumn>
+
+       @*  <RadzenDataGridColumn TItem="Device" Title="Options" Pickable="false">
+            <Template Context="item">
+                <RadzenSplitButton Text="Görüntüle" Click="(s) =>Nav.NavigateTo((s?.Value ?? C.NAV.Uyeler.Ac) + item.DeviceId)">
+                    <ChildContent>
+                        <RadzenSplitButtonItem Text="Görüntüle" Value="@C.NAV.Uyeler.Ac" />
+                        <RadzenSplitButtonItem Text="Sil" Value="@C.NAV.Uyeler.Sil" />
+                        <RadzenSplitButtonItem Text="Düzenle" Value="@C.NAV.Uyeler.Duzenle" />
+                    </ChildContent>
+                </RadzenSplitButton>
+            </Template>
+        </RadzenDataGridColumn> *@
+            </Columns>
+        </RadzenDataGrid>
+    </Authorized>
+</AuthorizeView>
+@code {
+    RadzenDataGrid<Device>? grid;
+    private DataList<Device>? data;
+    private Device current = new Device();
+    private string GetButtonText()
+    {
+        return current?.DeviceId > 0 ? "Update" : "Add";
+    }
+
+    private void AddOrUpdate(DialogService? ds)
+    {
+        try
+        {
+            db.Devices.AddOrUpdateData(current);
+            NTF.Notify(NotificationSeverity.Success, "Success!", "Data saved successfully! You can add more details for the device if you want.");
+            Nav.NavigateTo($"{C.NAV.Edit.EditDevice}{current.DeviceId}?{C.NAV.Params.Redirect}={C.NAV.Edit.DeviceList}");
+            // current = new Device();
+            // grid?.Reload();
+            // ds?.Close();
+        }
+        catch (Exception exc)
+        {
+            NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+        }
+    }
+
+    private async Task Choose(string? act, Device item)
+    {
+        if (string.IsNullOrEmpty(act) || act == "Edit")
+        {
+            // var result = await DialogService.OpenAsync<CDeviceEdit>("Edit", new Dictionary<string, object> { { "Model", item.Clone() } });
+            // if (result == true)
+            // {
+            //     grid?.Reload();
+            // }
+            Nav.NavigateTo($"{C.NAV.Edit.EditDevice}{item.DeviceId}?{C.NAV.Params.Redirect}={C.NAV.Edit.DeviceList}");
+        }
+        else if (act == "Delete")
+        {
+            var r = await DialogService.Confirm("Are you sure?", "Delete Confirmation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+            if (r == true)
+            {
+                try
+                {
+                    db.Devices.DeleteData(item);
+                    grid?.Reload();
+                    NTF.Notify(NotificationSeverity.Success, "Success!", "Data deleted successfully!");
+                }
+                catch (Exception exc)
+                {
+                    NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+                }
+            }
+        }
+    }
+
+    private async Task LoadData(LoadDataArgs args)
+    {
+        try
+        {
+            var r = db.Devices.ToList(
+                new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top),
+                (C.DBQ.Ex.Include, [nameof(DeviceType), nameof(DeviceGroup), nameof(Device.DeviceAddresses)])
+            );
+            data = new DataList<Device>()
+                {
+                    Data = r.Data,
+                    NonFilteredCount = r.NonFilteredCount
+                };
+        }
+        catch (Exception exc)
+        {
+            data = null;
+            NTF.Notify(NotificationSeverity.Error, "Error!", exc.Message);
+        }
+        await Task.CompletedTask;
+    }
+}

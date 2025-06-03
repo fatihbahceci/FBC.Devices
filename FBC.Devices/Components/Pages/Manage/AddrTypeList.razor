@@ -2,28 +2,34 @@
 @inject DeviceDB db
 @inject NotificationService NTF
 @inject DialogService DialogService
-<PageTitle>Address Types</PageTitle>
-<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" Gap="1rem" class="rz-p-sm-12">
-    <RadzenFormField AllowFloatingLabel="false" Text="Name">
-        <RadzenTextBox @bind-Value="@current.Name" />
-    </RadzenFormField>
-    <RadzenButton Text="@GetButtonText()" Click="()=> AddOrUpdate(null)" />
-</RadzenStack>
-<RadzenDataGrid @ref="grid" Count="@(data?.NonFilteredCount ?? 0)" Data="@data?.Data"
-                TItem="AddrType"
-                LoadData="@LoadData"
-                AllowSorting="true"
-                AllowFiltering="true"
-                AllowColumnPicking="false"
-                AllowPaging="true"
-                PagerHorizontalAlign="HorizontalAlign.Center"
-                PageSizeOptions="new int[]{10,20,50,100,500}"
-                PagerPosition="PagerPosition.TopAndBottom"
-                PageSize="10"
-                ShowPagingSummary="true">
-    <Columns>
-        <RadzenDataGridColumn TItem="AddrType" Property="AddrTypeId" Title="Id" Pickable="false" Width="100px" />
-        <RadzenDataGridColumn TItem="AddrType" Property="Name" Title="Name" Pickable="false" />
+@* @attribute [Authorize(Roles = C.UserRoles.EditDeviceAddrTypes)] *@
+<AuthorizeView Roles="@C.UserRoles.EditDeviceAddrTypes">
+    <NotAuthorized>
+        <CNotAuthorized />
+    </NotAuthorized>
+    <Authorized>
+        <PageTitle>Address Types</PageTitle>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" Gap="1rem" class="rz-p-sm-12">
+            <RadzenFormField AllowFloatingLabel="false" Text="Name">
+                <RadzenTextBox @bind-Value="@current.Name" />
+            </RadzenFormField>
+            <RadzenButton Text="@GetButtonText()" Click="()=> AddOrUpdate(null)" />
+        </RadzenStack>
+        <RadzenDataGrid @ref="grid" Count="@(data?.NonFilteredCount ?? 0)" Data="@data?.Data"
+                        TItem="AddrType"
+                        LoadData="@LoadData"
+                        AllowSorting="true"
+                        AllowFiltering="true"
+                        AllowColumnPicking="false"
+                        AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSizeOptions="new int[]{10,20,50,100,500}"
+                        PagerPosition="PagerPosition.TopAndBottom"
+                        PageSize="10"
+                        ShowPagingSummary="true">
+            <Columns>
+                <RadzenDataGridColumn TItem="AddrType" Property="AddrTypeId" Title="Id" Pickable="false" Width="100px" />
+                <RadzenDataGridColumn TItem="AddrType" Property="Name" Title="Name" Pickable="false" />
 @*         <RadzenDataGridColumn TItem="AddrType" Property="TCKNo" Title="TCKNo" Pickable="true" Visible="false" />
         <RadzenDataGridColumn TItem="AddrType" Property="OncekiSoyadi" Title="OncekiSoyadi" Pickable="true" Visible="false" />
         <RadzenDataGridColumn TItem="AddrType" Property="BabaAdi" Title="BabaAdi" Pickable="true" Visible="false" />
@@ -38,16 +44,16 @@
         <RadzenDataGridColumn TItem="AddrType" Property="VergiDairesi" Title="VergiDairesi" Pickable="true" Visible="false" />
         <RadzenDataGridColumn TItem="AddrType" Property="VergiNo" Title="VergiNo" Pickable="true" Visible="false" /> *@
 
-        <RadzenDataGridColumn TItem="AddrType" Title="Options" Pickable="false">
-            <Template Context="item">
-                <RadzenSplitButton Text="Edit" Click="(s) =>Choose(s?.Value , item)">
-                    <ChildContent>
-                        <RadzenSplitButtonItem Text="Edit" Value="Edit" />
-                        <RadzenSplitButtonItem Text="Delete" Value="Delete" />
-                    </ChildContent>
-                </RadzenSplitButton>
-            </Template>
-        </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="AddrType" Title="Options" Pickable="false">
+                    <Template Context="item">
+                        <RadzenSplitButton Text="Edit" Click="(s) =>Choose(s?.Value , item)">
+                            <ChildContent>
+                                <RadzenSplitButtonItem Text="Edit" Value="Edit" />
+                                <RadzenSplitButtonItem Text="Delete" Value="Delete" />
+                            </ChildContent>
+                        </RadzenSplitButton>
+                    </Template>
+                </RadzenDataGridColumn>
 
        @*  <RadzenDataGridColumn TItem="AddrType" Title="Options" Pickable="false">
             <Template Context="item">
@@ -60,9 +66,10 @@
                 </RadzenSplitButton>
             </Template>
         </RadzenDataGridColumn> *@
-    </Columns>
-</RadzenDataGrid>
-
+            </Columns>
+        </RadzenDataGrid>
+    </Authorized>
+</AuthorizeView>
 @code {
     RadzenDataGrid<AddrType>? grid;
     private DataList<AddrType>? data;
