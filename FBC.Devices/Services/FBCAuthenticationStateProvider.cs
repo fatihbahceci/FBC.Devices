@@ -32,7 +32,7 @@ namespace FBC.Devices.Services
 
     public class FBCAuthenticationStateProvider : AuthenticationStateProvider
     {
-        private DBUSer? _currentUser;
+        private DBUser? _currentUser;
 
         public Task<bool> LoginAsync(string username, string password)
         {

@@ -8,7 +8,18 @@
     <RadzenHeader>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
             <RadzenSidebarToggle Click="@(() => sidebar1Expanded = !sidebar1Expanded)" />
-            <RadzenLabel Text="FBC.Devices" />
+            <RadzenLabel Text="FBC.Devices"/>
+            <AuthorizeView>
+                <Authorized>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+                        <RadzenLabel Text="@GetUserTitle(context)" Style="padding-left: 10px" />
+                        <RadzenButton Icon="logout" Click="Logout" Style="margin-left: 10px" />
+                    </RadzenStack>
+                </Authorized>
+                <NotAuthorized>
+                    <RadzenLink Icon="login" Text="Login" Path="@C.NAV.Login" Style="padding-left: 10px" />
+                </NotAuthorized>
+            </AuthorizeView>
         </RadzenStack>
     </RadzenHeader>
     <RadzenSidebar @bind-Expanded="@sidebar1Expanded">
@@ -16,31 +27,33 @@
             <AuthorizeView Context="usr">
                 <Authorized>
                     <RadzenPanelMenuItem Text="Home" Icon="home" Path="@C.NAV.HomePage" />
-                    <RadzenPanelMenuItem Text="Edit" Icon="edit">
+                    <RadzenPanelMenuItem Text="Manage" Icon="edit">
                         <AuthorizeView Roles="@C.UserRoles.EditDeviceAddrTypes">
                             <RadzenPanelMenuItem Text="Address Types" Icon="alternate_email" Path="@C.NAV.Edit.AddrTypeList" />
                         </AuthorizeView>
-                        <AuthorizeView Roles="@C.UserRoles.EditDeviceAddrTypes">
+                        <AuthorizeView Roles="@C.UserRoles.EditDeviceTypes">
                             <RadzenPanelMenuItem Text="Device Types" Icon="important_devices" Path="@C.NAV.Edit.DeviceTypeList" />
                         </AuthorizeView>
-                        <AuthorizeView Roles="@C.UserRoles.EditDeviceAddrTypes">
+                        <AuthorizeView Roles="@C.UserRoles.EditDeviceGroups">
                             <RadzenPanelMenuItem Text="Device Groups" Icon="move_group" Path="@C.NAV.Edit.DeviceGroupList" />
                         </AuthorizeView>
-                        <AuthorizeView Roles="@C.UserRoles.EditDeviceAddrTypes">
+                        <AuthorizeView Roles="@C.UserRoles.EditDevices">
                             <RadzenPanelMenuItem Text="Devices" Icon="devices_other" Path="@C.NAV.Edit.DeviceList" />
+                        </AuthorizeView>
+                        <AuthorizeView Roles="@C.UserRoles.SysAdmin">
+                            <RadzenPanelMenuItem Text="Users" Icon="devices_other" Path="@C.NAV.Edit.UserList" />
                         </AuthorizeView>
                     </RadzenPanelMenuItem>
                     <RadzenPanelMenuItem Text="Logout" Icon="logout" Click="Logout"  />
-
                 </Authorized>
                 <NotAuthorized>
                     <RadzenPanelMenuItem Text="Login" Icon="login" Path="@C.NAV.Login" />
                 </NotAuthorized>
             </AuthorizeView>
         </RadzenPanelMenu>
-        <div class="rz-p-4">
+@*         <div class="rz-p-4">
             Sidebar
-        </div>
+        </div> *@
     </RadzenSidebar>
     <RadzenBody>
         <div class="rz-p-4">
@@ -48,7 +61,7 @@
         </div>
     </RadzenBody>
     <RadzenFooter>
-        Footer
+        <RadzenLink Text="FBC.Devices on Github" Icon="open_in_new" Path="https://github.com/fatihbahceci/FBC.Devices" Target="_blank" />
     </RadzenFooter>
 </RadzenLayout>
 
@@ -69,4 +82,15 @@
         (mgr as FBC.Devices.Services.FBCAuthenticationStateProvider)!.Logout();
         await Task.CompletedTask;
     }
+    string GetUserTitle(AuthenticationState context)
+    {
+        if (context.User.Identity?.IsAuthenticated ?? false)
+        {
+            var name = context.User.FindFirst(ClaimTypes.Name)?.Value;
+            var fulName = context.User.FindFirst("FullName")?.Value;
+            return $"{fulName} ({name})";
+        }
+        return "Guest";
+    }
+
 }

@@ -10,7 +10,7 @@ namespace FBC.Devices.DBModels
         public DbSet<DeviceGroup> DeviceGroups { get; set; }
         public DbSet<Device> Devices { get; set; }
         public DbSet<DeviceAddr> DeviceAddresses { get; set; }
-        public DbSet<DBUSer> SysUsers { get; set; }
+        public DbSet<DBUser> SysUsers { get; set; }
 
 
         public string DbPath { get; }
@@ -40,7 +40,7 @@ namespace FBC.Devices.DBModels
                     {
                         Console.WriteLine("Creating SysAdmin User with default credentials (username: admin, password: admin)");
                         Console.WriteLine("Please change the password after first login!");
-                        var user = new DBUSer()
+                        var user = new DBUser()
                         {
                             UserName = "admin",
                             Password = C.Tools.ToMD5("admin"),

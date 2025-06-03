@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-    public class DBUSer : IHasPrimaryKey
+    public class DBUser : IHasPrimaryKey
     {
         [Key]
         public int UserId { get; set; }
@@ -22,11 +22,26 @@ namespace FBC.Devices.DBModels
         /// Comma separated list of roles, e.g. "Admin,User,Viewer Or CRUD operations like "Create,Read,Update,Delete" or page rules. 
         /// </summary>
         public string Roles { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
 
+        public string Name { get; set; } = string.Empty;
+        public string[] GetRoles()
+        {
+            return (Roles?.Trim() ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+        public void SetRoles(IEnumerable<string> roles)
+        {
+            if (roles == null)
+            {
+                Roles = string.Empty;
+            }
+            else
+            {
+                Roles = string.Join(",", roles.Select(r => r.Trim()).Where(r => !string.IsNullOrWhiteSpace(r)));
+            }
+        }
         public void AdjustData(bool validate)
         {
-            var roles = (Roles?.Trim() ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            var roles = GetRoles().ToList();
             if (IsSysAdmin && !roles.Contains(C.UserRoles.SysAdmin))
             {
                 roles.Add(C.UserRoles.SysAdmin);
@@ -35,7 +50,7 @@ namespace FBC.Devices.DBModels
             {
                 roles.Remove(C.UserRoles.SysAdmin);
             }
-            Roles = (string.Join(",", roles) ?? "").Trim();
+            SetRoles(roles);
 
             if (!string.IsNullOrWhiteSpace(NewPassword))
             {
