@@ -103,7 +103,13 @@ namespace FBC.Devices.DBModels
                 }
             }
         }
-
+        //protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        //{
+        //    // Make all string properties use NOCASE (ASCII case-insensitive) collation
+        //    configurationBuilder.Properties<string>()
+        //           .UseCollation("NOCASE");
+        //    base.ConfigureConventions(configurationBuilder);
+        //}
 
         // The following configures EF to create a Sqlite database file in the
         // special "local" folder for your platform.
