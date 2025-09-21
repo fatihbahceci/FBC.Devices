@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FBC.Devices.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace FBC.Devices.DBModels
 {
@@ -213,5 +214,44 @@ namespace FBC.Devices.DBModels
             return backupPath;
         }
         #endregion
+        private static readonly HashSet<Type> _watched = new()
+{
+            typeof(Device),
+            typeof(DeviceAddr),
+            typeof(DeviceGroup),
+            typeof(DeviceType),
+            typeof(AddrType) };
+
+        private bool RelevantChangeDetected() =>
+
+            ChangeTracker.Entries()
+                .Any(e => (e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted)
+                && _watched.Contains(e.Entity.GetType()));
+
+
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            bool relevantChange = RelevantChangeDetected();
+            int rows = base.SaveChanges(acceptAllChangesOnSuccess);
+            if (relevantChange && rows > 0)
+            {
+                DeviceSearchDataService.RequestImmediateScan();
+            }
+            return rows;
+        }
+
+        override public async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            bool relevantChange = RelevantChangeDetected();
+            var rows = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+            if (relevantChange && rows > 0)
+            {
+                DeviceSearchDataService.RequestImmediateScan();
+            }
+            return rows;
+
+        }
     }
 }

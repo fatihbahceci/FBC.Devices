@@ -7,22 +7,48 @@ namespace FBC.Devices.Services;
 public class DeviceSearchDataService : BackgroundService, IHostedService
 {
     private readonly ILogger logger;
+    private static volatile bool _immediateScanRequested;
+    private CancellationTokenSource? immediateRequestStopTokenSource;
+    public static void RequestImmediateScan() => _immediateScanRequested = true;
     //Altrnatively, use a DbContextFactory: private readonly IDbContextFactory<DB> _dbFactory;
 
     public DeviceSearchDataService(ILogger<DeviceSearchDataService> logger/*, IDbContextFactory<DB> dbFactory*/)
     {
         this.logger = logger;
+        immediateRequestStopTokenSource = null;
         //this._dbFactory = dbFactory;
     }
     //https://learn.microsoft.com/en-us/dotnet/architecture/microservices/multi-container-microservice-net-applications/background-tasks-with-ihostedservice
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken); // startup delay
+        immediateRequestStopTokenSource = new CancellationTokenSource();
         while (!stoppingToken.IsCancellationRequested)
         {
             if (await DoWork(stoppingToken))
             {
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                if (_immediateScanRequested)
+                {
+                    _immediateScanRequested = false; // reset the flag
+                    logger.LogInformation("Immediate scan requested, starting next cycle immediately.");
+                    immediateRequestStopTokenSource.Cancel(); // Cancel any ongoing delay
+                    immediateRequestStopTokenSource?.Dispose();
+                    immediateRequestStopTokenSource = new CancellationTokenSource(); // Create a new CTS for future use
+                    continue; // start next cycle immediately
+                }
+                //await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
+                //Race stoppingToken and immediateRequestStopTkeSource.Token in delay method
+                try
+                {
+                    using var linked = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, immediateRequestStopTokenSource.Token);
+                    await Task.Delay(TimeSpan.FromMinutes(3), linked.Token);
+                }
+                catch (TaskCanceledException)
+                {
+                    logger.LogInformation("Delay cancelled.");
+                    // Ignore, this is expected if an immediate scan was requested
+                }
+
             }
             else
             {
@@ -34,7 +60,7 @@ public class DeviceSearchDataService : BackgroundService, IHostedService
         await Task.CompletedTask;
     }
     private readonly SemaphoreSlim _workLock = new SemaphoreSlim(1, 1);
-   
+
     private async Task<bool> DoWork(CancellationToken stoppingToken)
     {
         if (!await _workLock.WaitAsync(0, stoppingToken)) return false;
