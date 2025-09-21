@@ -11,6 +11,7 @@ namespace FBC.Devices.DBModels
         public DbSet<Device> Devices { get; set; }
         public DbSet<DeviceAddr> DeviceAddresses { get; set; }
         public DbSet<DBUser> SysUsers { get; set; }
+        public DbSet<DeviceSearchData> DeviceSearchMetas { get; set; }
 
 
         public string DbPath { get; }
