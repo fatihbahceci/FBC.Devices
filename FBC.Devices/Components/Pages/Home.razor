@@ -46,7 +46,7 @@
 
             <RadzenColumn Size="1">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Left" Gap="0.5rem" class="rz-p-6">
-                    <RadzenButton Icon="search" Click="ApplyFilter" Disabled="@auto" />
+                    <RadzenButton Icon="search" Click="LoadData" Disabled="@auto" />
                 </RadzenStack>
             </RadzenColumn>
 
@@ -184,24 +184,19 @@
 </AuthorizeView>
 
 @code {
-    IEnumerable<int> filterKeys = new int[] { 1, 2, 4, 6 }; //Only device Name, Description, SerialNumber, and Note by default
+    IEnumerable<int> filterKeys = new int[] { 1, 2, 4, 6, 10 }; //Only device Name, Description, SerialNumber, Note and Device.Addr by default
     //for all use below
     // IEnumerable<int> filterKeys =  DeviceSearchDataHelper.SearchCriteriaKeys.Select(x => x.Index).ToArray();
     List<SearchCriteriaInfo> filterData = DeviceSearchDataHelper.SearchCriteriaKeys.ToList();
     string filterText = "";
     string pagingSummaryFormat = "Displaying page {0} of {1} (total {2} records)";
 
-    private int Count => data?.NonFilteredCount ?? 0;
+    private int Count => data?.Data?.Count ?? 0;
     private int PageSize => 5;
     private PagerEventArgs? pagerEventArgs;
     private DataList<Device>? data;
     private bool auto = false;
 
-    async Task ApplyFilter()
-    {
-        // finalSelectedTitles = selectedTitles;
-        LoadData();
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -248,6 +243,13 @@
 
         //dataFilter.Filters
         int[] ids = [];
+        int skip = 0;
+        int take = PageSize;
+        if (pagerEventArgs != null)
+        {
+            skip = pagerEventArgs.Skip;
+            take= pagerEventArgs.Top;
+        }
         bool hasFiltered = false;
         if (!string.IsNullOrEmpty(filterText))
         {
@@ -267,6 +269,7 @@
             {
                 var r = db.Devices.ToList(
                     x => true,
+                    skip,take,
                     (C.DBQ.Ex.Include, [
                         nameof(DeviceType),
                         nameof(DeviceGroup),
@@ -276,13 +279,13 @@
                 );
                 data = new DataList<Device>()
                 {
-                    Data = r,
-                    NonFilteredCount = r.Count
+                    Data = r.Data,
+                    NonFilteredCount = r.NonFilteredCount
                 };
             }
             else
             {
-                var r = db.Devices.ToList(x => ids.Contains(x.DeviceId), 0, 0,
+                var r = db.Devices.ToList(x => ids.Contains(x.DeviceId), skip, take,
                     (C.DBQ.Ex.Include, [
                         nameof(DeviceType),
                         nameof(DeviceGroup),
