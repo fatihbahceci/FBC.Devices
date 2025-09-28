@@ -34,6 +34,7 @@ builder.Services.AddAuthorization(); // Normal middleware auth
 */
 
 builder.Services.AddHostedService<FBC.Devices.Services.DeviceStatusService>();
+builder.Services.AddHostedService<FBC.Devices.Services.DeviceSearchDataService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

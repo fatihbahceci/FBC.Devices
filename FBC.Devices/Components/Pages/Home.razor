@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using System.Net.NetworkInformation
+@using FBC.Devices.Services
 @inject NavigationManager Nav;
 @inject DeviceDB db
 @inject NotificationService NTF
@@ -7,48 +8,49 @@
 @* @attribute [Authorize(Roles = C.UserRoles.ViewDevices)] *@
 <AuthorizeView Roles="@C.UserRoles.ViewDevices">
     <NotAuthorized>
-        <CNotAuthorized/>
+        <CNotAuthorized />
     </NotAuthorized>
     <Authorized>
         <PageTitle>Home</PageTitle>
-        <RadzenPager ShowPagingSummary="true"
-                     AlwaysVisible="false"
-                     PagingSummaryFormat="@pagingSummaryFormat"
-                     HorizontalAlign="HorizontalAlign.Right"
-                     Count="Count"
-                     PageSize="@PageSize"
-                     PageNumbersCount="5"
-                     PageChanged="@PageChanged" />
 
-        <RadzenStack Gap="2rem">
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="rz-p-4 rz-border-radius-1" Style="border: var(--rz-grid-cell-border);">
-                <RadzenCheckBox @bind-Value="@auto" Name="auto" />
-                <RadzenLabel Text="Auto filter" Component="auto" class="rz-me-6" />
-                <RadzenButton Text="Apply Filter" Click="@ApplyFilter" Disabled="@auto" Size="ButtonSize.Small" />
-            </RadzenStack>
+        <RadzenRow>
+            <RadzenColumn>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Left" Gap="0.5rem" class="rz-p-6">
+                    <RadzenLabel Text="Search" Component="Ruknettin" />
+                    <RadzenTextBox @bind-Value=@filterText Style="width: 100%;" Name="Ruknettin" Placeholder="Search..." />
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Left" Gap="0.5rem" class="rz-p-6">
+                    <RadzenLabel Text="for" Component="DropDownMultipleChips" />
+                    <RadzenDropDown @bind-Value=@filterKeys
+                                    Data=@filterData
+                                    Name="DropDownMultipleChips"
+                                    SelectAllText="All"
+                                    Multiple=true
+                                    AllowClear=true
+                                    Placeholder="Search for"
+                                    ValueProperty="@nameof(SearchCriteriaInfo.Index)"
+                                    Chips=true
+                                    AllowFiltering=true
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    ClearSearchAfterSelection=true
+                                    MaxSelectedLabels="9"
+                                    Style="width: 100%;">
+                        <Template Context="c">
+                            @($"{c.Table}.{c.FieldName}")
+                        </Template>
+                    </RadzenDropDown>
+                </RadzenStack>
+            </RadzenColumn>
 
-            <RadzenDataFilter @ref="dataFilter" Auto=auto Data="@data?.Data" TItem="Device" ViewChanged=@(view => LoadData())>
-                <Properties>
-                    <RadzenDataFilterProperty Property="@nameof(Device.DeviceId)" Title="Device ID" />
-                    <RadzenDataFilterProperty Property="@nameof(Device.Name)" Title="Name" />
-                    @*             <RadzenDataFilterProperty Property="@nameof(Device.DeviceType.Name)" Title="Device Type" />
-            <RadzenDataFilterProperty Property="@nameof(Device.DeviceGroup.Name)" Title="Group" />
- *@            <RadzenDataFilterProperty Property="@nameof(Device.DeviceModel)" Title="Model" />
-                    <RadzenDataFilterProperty Property="@nameof(Device.Location)" Title="Device Location" />
-                    @*             <RadzenDataFilterProperty Property="Employee.LastName" Title="Employee Last Name" />
-            <MyCustomEnumerableDataFilterProperty Property="Employee.Title" Title="Employee Title" FilterValue="@finalSelectedTitles"
-                                                    Type="typeof(IEnumerable<string>)" FilterOperator="FilterOperator.Contains">
-                <FilterTemplate>
-                    <RadzenDropDown @bind-Value=@selectedTitles Style="width:100%;" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select title" }})"
-                                    Change=@OnSelectedTitlesChange Data="@(titles)" AllowClear="true" Multiple="true" />
-                </FilterTemplate>
-            </MyCustomEnumerableDataFilterProperty>
-            <MyCustomDataFilterProperty Property="@nameof(Order.OrderDate)" Title="Order Date" />
-            <RadzenDataFilterProperty Property="@nameof(Order.Freight)" Title="Freight" />
- *@        </Properties>
-            </RadzenDataFilter>
+            <RadzenColumn Size="1">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Left" Gap="0.5rem" class="rz-p-6">
+                    <RadzenButton Icon="search" Click="LoadData" Disabled="@auto" />
+                </RadzenStack>
+            </RadzenColumn>
 
-        </RadzenStack>
+        </RadzenRow>
 
 
 
@@ -162,7 +164,7 @@
                             <b>Device Enabled</b>
                         </RadzenColumn>
                         <RadzenColumn Size="4" class="rz-text-align-end">
-                            <RadzenBadge BadgeStyle="@(device.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)" Text=@(device.IsActive ? "YES" : "NO") />
+                            <RadzenBadge BadgeStyle="@(device.IsActive? BadgeStyle.Success: BadgeStyle.Danger)" Text=@(device.IsActive ? "YES" : "NO") />
                         </RadzenColumn>
                     </RadzenRow>
                 </RadzenCard>
@@ -182,20 +184,19 @@
 </AuthorizeView>
 
 @code {
+    IEnumerable<int> filterKeys = new int[] { 1, 2, 4, 6, 10 }; //Only device Name, Description, SerialNumber, Note and Device.Addr by default
+    //for all use below
+    // IEnumerable<int> filterKeys =  DeviceSearchDataHelper.SearchCriteriaKeys.Select(x => x.Index).ToArray();
+    List<SearchCriteriaInfo> filterData = DeviceSearchDataHelper.SearchCriteriaKeys.ToList();
+    string filterText = "";
     string pagingSummaryFormat = "Displaying page {0} of {1} (total {2} records)";
 
-    private int Count => data?.NonFilteredCount ?? 0;
+    private int Count => data?.Data?.Count ?? 0;
     private int PageSize => 5;
     private PagerEventArgs? pagerEventArgs;
     private DataList<Device>? data;
-    RadzenDataFilter<Device> dataFilter = new RadzenDataFilter<Device>();
     private bool auto = false;
 
-    async Task ApplyFilter()
-    {
-        // finalSelectedTitles = selectedTitles;
-        await dataFilter.Filter();
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -207,13 +208,13 @@
     {
         if (firstRender)
         {
-            await dataFilter.AddFilter(new CompositeFilterDescriptor()
-                {
-                    Property = nameof(Device.Name),
-                    FilterValue = "",
-                    FilterOperator = FilterOperator.Contains
-                });
-            await dataFilter.Filter();
+            // await dataFilter.AddFilter(new CompositeFilterDescriptor()
+            // {
+            //     Property = nameof(Device.Name),
+            //     FilterValue = "",
+            //     FilterOperator = FilterOperator.Contains
+            // });
+            // await dataFilter.Filter();
         }
     }
 
@@ -226,37 +227,92 @@
 
     void LoadData()
     {
-        LoadDataArgs args = new LoadDataArgs();
+        // LoadDataArgs args = new LoadDataArgs();
 
+        // if (pagerEventArgs != null)
+        // {
+        //     args.Skip = pagerEventArgs.Skip;
+        //     args.Top = pagerEventArgs.Top;
+        // }
+        // else
+        // {
+        //     args.Skip = 0;
+        //     args.Top = PageSize;
+        // }
+        // args.Filter = dataFilter.ToFilterString();
+
+        //dataFilter.Filters
+        int[] ids = [];
+        int skip = 0;
+        int take = PageSize;
         if (pagerEventArgs != null)
         {
-            args.Skip = pagerEventArgs.Skip;
-            args.Top = pagerEventArgs.Top;
+            skip = pagerEventArgs.Skip;
+            take= pagerEventArgs.Top;
         }
-        else
+        bool hasFiltered = false;
+        if (!string.IsNullOrEmpty(filterText))
         {
-            args.Skip = 0;
-            args.Top = PageSize;
+            var filterx = filterData.Where(x => filterKeys.Contains(x.Index)).ToList();
+            ids = DeviceSearchDataHelper.GetDeviceIds(db.DB, filterx, filterText).ToArray();
+            hasFiltered = true;
         }
-        args.Filter = dataFilter.ToFilterString();
-        //dataFilter.Filters
+
 
         try
         {
-            var r = db.Devices.ToList(
-                new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top),
-                (C.DBQ.Ex.Include, [
-                    nameof(DeviceType),
-                    nameof(DeviceGroup),
-                    nameof(Device.DeviceAddresses),
-                    nameof(Device.DeviceAddresses) + "."+ nameof(AddrType)
-                ])
-            );
-            data = new DataList<Device>()
+            if (hasFiltered && (ids == null || ids.Length == 0))
+            {
+                data = null;
+            }
+            else if (!hasFiltered)
+            {
+                var r = db.Devices.ToList(
+                    x => true,
+                    skip,take,
+                    (C.DBQ.Ex.Include, [
+                        nameof(DeviceType),
+                        nameof(DeviceGroup),
+                        nameof(Device.DeviceAddresses),
+                        nameof(Device.DeviceAddresses) + "."+ nameof(AddrType)
+                    ])
+                );
+                data = new DataList<Device>()
                 {
                     Data = r.Data,
                     NonFilteredCount = r.NonFilteredCount
                 };
+            }
+            else
+            {
+                var r = db.Devices.ToList(x => ids.Contains(x.DeviceId), skip, take,
+                    (C.DBQ.Ex.Include, [
+                        nameof(DeviceType),
+                        nameof(DeviceGroup),
+                        nameof(Device.DeviceAddresses),
+                        nameof(Device.DeviceAddresses) + "."+ nameof(AddrType)
+                    ])
+                );
+                data = new DataList<Device>()
+                {
+                    Data = r.Data,
+                    NonFilteredCount = r.NonFilteredCount
+                };
+            }
+            // var r = db.Devices.ToList(
+            //     new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top),
+            //     (C.DBQ.Ex.Include, [
+            //         nameof(DeviceType),
+            //         nameof(DeviceGroup),
+            //         nameof(Device.DeviceAddresses),
+            //         nameof(Device.DeviceAddresses) + "."+ nameof(AddrType)
+            //     ])
+            // );
+            // data = new DataList<Device>()
+            // {
+            //     Data = r.Data,
+            //     NonFilteredCount = r.NonFilteredCount
+            // };
         }
         catch (Exception exc)
         {
