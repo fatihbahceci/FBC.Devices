@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FBC.Devices.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace FBC.Devices.DBModels
 {
@@ -11,6 +12,7 @@ namespace FBC.Devices.DBModels
         public DbSet<Device> Devices { get; set; }
         public DbSet<DeviceAddr> DeviceAddresses { get; set; }
         public DbSet<DBUser> SysUsers { get; set; }
+        public DbSet<DeviceSearchData> DeviceSearchMetas { get; set; }
 
 
         public string DbPath { get; }
@@ -103,7 +105,13 @@ namespace FBC.Devices.DBModels
                 }
             }
         }
-
+        //protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        //{
+        //    // Make all string properties use NOCASE (ASCII case-insensitive) collation
+        //    configurationBuilder.Properties<string>()
+        //           .UseCollation("NOCASE");
+        //    base.ConfigureConventions(configurationBuilder);
+        //}
 
         // The following configures EF to create a Sqlite database file in the
         // special "local" folder for your platform.
@@ -193,7 +201,7 @@ namespace FBC.Devices.DBModels
             GC.WaitForPendingFinalizers();
         }
 
-        private string CreateBackup()
+        private /*async Task<string>*/string CreateBackup()
         {
             string backupDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DatabaseBackups");
             if (!Directory.Exists(backupDir))
@@ -203,8 +211,50 @@ namespace FBC.Devices.DBModels
 
             string backupPath = Path.Combine(backupDir, $"FBC.Devices_backup_{DateTime.Now:yyyyMMddHHmmss}.db");
             File.Copy(DbPath, backupPath, true);
+            //Alternatif: VACUUM INTO
+            //await db.Database.ExecuteSqlRawAsync($@"VACUUM INTO '{backup}';", ct);
+
             return backupPath;
         }
         #endregion
+        private static readonly HashSet<Type> _watched = new()
+{
+            typeof(Device),
+            typeof(DeviceAddr),
+            typeof(DeviceGroup),
+            typeof(DeviceType),
+            typeof(AddrType) };
+
+        private bool RelevantChangeDetected() =>
+
+            ChangeTracker.Entries()
+                .Any(e => (e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted)
+                && _watched.Contains(e.Entity.GetType()));
+
+
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            bool relevantChange = RelevantChangeDetected();
+            int rows = base.SaveChanges(acceptAllChangesOnSuccess);
+            if (relevantChange && rows > 0)
+            {
+                DeviceSearchDataService.RequestImmediateScan();
+            }
+            return rows;
+        }
+
+        override public async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            bool relevantChange = RelevantChangeDetected();
+            var rows = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+            if (relevantChange && rows > 0)
+            {
+                DeviceSearchDataService.RequestImmediateScan();
+            }
+            return rows;
+
+        }
     }
 }
