@@ -140,11 +140,7 @@
                 new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top),
                 (C.DBQ.Ex.Include, [nameof(DeviceType), nameof(DeviceGroup), nameof(Device.DeviceAddresses)])
             );
-            data = new DataList<Device>()
-                {
-                    Data = r.Data,
-                    NonFilteredCount = r.NonFilteredCount
-                };
+            data = r;
         }
         catch (Exception exc)
         {

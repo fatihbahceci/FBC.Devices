@@ -125,11 +125,7 @@
         try
         {
             var r = db.Users.ToList(new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top));
-            data = new DataList<DBUser>()
-                {
-                    Data = r.Data,
-                    NonFilteredCount = r.NonFilteredCount
-                };
+            data = r;
             await Task.CompletedTask;
         }
         catch (Exception exc)

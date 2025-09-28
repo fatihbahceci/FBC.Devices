@@ -136,11 +136,7 @@
         try
         {
             var r = db.AddrTypes.ToList(new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top));
-            data = new DataList<AddrType>()
-                {
-                    Data = r.Data,
-                    NonFilteredCount = r.NonFilteredCount
-                };
+            data = r;
             await Task.CompletedTask;
         }
         catch (Exception exc)

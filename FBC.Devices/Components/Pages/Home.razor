@@ -191,7 +191,7 @@
     string filterText = "";
     string pagingSummaryFormat = "Displaying page {0} of {1} (total {2} records)";
 
-    private int Count => data?.Data?.Count ?? 0;
+    private int Count => data?.FilteredCount ?? 0;
     private int PageSize => 5;
     private PagerEventArgs? pagerEventArgs;
     private DataList<Device>? data;
@@ -204,19 +204,19 @@
 
         LoadData();
     }
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // await dataFilter.AddFilter(new CompositeFilterDescriptor()
-            // {
-            //     Property = nameof(Device.Name),
-            //     FilterValue = "",
-            //     FilterOperator = FilterOperator.Contains
-            // });
-            // await dataFilter.Filter();
-        }
-    }
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         // await dataFilter.AddFilter(new CompositeFilterDescriptor()
+    //         // {
+    //         //     Property = nameof(Device.Name),
+    //         //     FilterValue = "",
+    //         //     FilterOperator = FilterOperator.Contains
+    //         // });
+    //         // await dataFilter.Filter();
+    //     }
+    // }
 
 
     void PageChanged(PagerEventArgs args)
@@ -248,7 +248,7 @@
         if (pagerEventArgs != null)
         {
             skip = pagerEventArgs.Skip;
-            take= pagerEventArgs.Top;
+            take = pagerEventArgs.Top;
         }
         bool hasFiltered = false;
         if (!string.IsNullOrEmpty(filterText))
@@ -269,7 +269,7 @@
             {
                 var r = db.Devices.ToList(
                     x => true,
-                    skip,take,
+                    skip, take,
                     (C.DBQ.Ex.Include, [
                         nameof(DeviceType),
                         nameof(DeviceGroup),
@@ -277,11 +277,7 @@
                         nameof(Device.DeviceAddresses) + "."+ nameof(AddrType)
                     ])
                 );
-                data = new DataList<Device>()
-                {
-                    Data = r.Data,
-                    NonFilteredCount = r.NonFilteredCount
-                };
+                data = r;
             }
             else
             {
@@ -293,11 +289,7 @@
                         nameof(Device.DeviceAddresses) + "."+ nameof(AddrType)
                     ])
                 );
-                data = new DataList<Device>()
-                {
-                    Data = r.Data,
-                    NonFilteredCount = r.NonFilteredCount
-                };
+                data = r;
             }
             // var r = db.Devices.ToList(
             //     new ACGetListRequest(args.Filter, args.OrderBy, args.Skip, args.Top),

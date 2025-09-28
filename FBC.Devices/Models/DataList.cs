@@ -244,7 +244,7 @@ namespace FBC.Devices.Models
             q = q.Where(predicate);
             return await q.FirstOrDefaultAsync();
         }
-        private IQueryable<TDataTable> applyLimitations(IQueryable<TDataTable> q,int skip, int take)
+        private IQueryable<TDataTable> applyLimitations(IQueryable<TDataTable> q, int skip, int take)
         {
             if (skip > 0)
             {
@@ -294,7 +294,9 @@ namespace FBC.Devices.Models
                 {
                     NonFilteredCount = q.Count(),
                 };
-                q = applyLimitations(q.Where(e),skip, take);    
+                q = q.Where(e);
+                result.FilteredCount = q.Count();
+                q = applyLimitations(q, skip, take);
                 result.Data = q.ToList();
                 return result;
             }
@@ -316,7 +318,9 @@ namespace FBC.Devices.Models
                 {
                     NonFilteredCount = query.Count(),
                 };
-                query = applyLimitations( applyFilter(query, args),args.Skip, args.Take);
+                query = applyFilter(query, args);
+                result.FilteredCount = query.Count();
+                query = applyLimitations(query, args.Skip, args.Take);
                 //result.Data = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList().Select(x => x?.Convert()).ToList();
 
                 result.Data = query.ToList();
@@ -381,6 +385,7 @@ namespace FBC.Devices.Models
         public DataList()
         {
             this.ResponseStatus = 0;
+            this.FilteredCount = 0;
         }
 
         public static DataList<T> Empty
@@ -395,6 +400,14 @@ namespace FBC.Devices.Models
         /// All data count
         /// </summary>
         public int NonFilteredCount { get; set; }
+        /// <summary>
+        /// Filtered data count.
+        /// During pagination, only as much data as take is returned. 
+        /// However, it is necessary to know how many data there are in total 
+        /// after filtering and before taking, so that the correct number 
+        /// of pages can be calculated during pagination.
+        /// </summary>
+        public int FilteredCount { get; set; }
 
     }
 }
