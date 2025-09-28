@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 
 namespace FBC.Devices.Services;
 
+internal record SearchCriteriaInfo(int Index, DeviceSearchDataTable Table, string FieldName);
+
 internal static class DeviceSearchDataHelper
 {
     public static async Task<Device?> GetDeviceWithFullData(DB db, int deviceId, CancellationToken ct)
@@ -20,69 +22,74 @@ internal static class DeviceSearchDataHelper
             .Include(d => d.DeviceAddresses).ThenInclude(da => da.AddrType)
             .FirstOrDefaultAsync(d => d.DeviceId == deviceId, ct);
     }
+    public static readonly List<(DeviceSearchDataTable Table, string FieldName)> SearchCriterias = new List<(DeviceSearchDataTable, string)>
+    {
+        (DeviceSearchDataTable.Device, nameof(Device.Name)),
+        (DeviceSearchDataTable.Device, nameof(Device.Description)),
+        (DeviceSearchDataTable.Device, nameof(Device.DeviceModel)),
+        (DeviceSearchDataTable.Device, nameof(Device.SerialNumber)),
+        (DeviceSearchDataTable.Device, nameof(Device.Location)),
+        (DeviceSearchDataTable.Device, nameof(Device.Note)),
+        (DeviceSearchDataTable.Device, nameof(Device.IsActive)),
+        (DeviceSearchDataTable.DeviceType, nameof(DeviceType.Name)),
+        (DeviceSearchDataTable.DeviceGroup, nameof(DeviceGroup.Name)),
+        (DeviceSearchDataTable.DeviceAddress, nameof(DeviceAddr.Addr)),
+        (DeviceSearchDataTable.DeviceAddress, nameof(DeviceAddr.Username)),
+        //(DeviceSearchDataTable.DeviceAddress, nameof(DeviceAddr.Password)), // Exclude password from search
+        (DeviceSearchDataTable.DeviceAddress, nameof(DeviceAddr.PeriodicPingCheck)),
+        (DeviceSearchDataTable.DeviceAddressType, nameof(AddrType.Name)),
+    };
+    public static readonly List<SearchCriteriaInfo> SearchCriteriaKeys = SearchCriterias
+        .Select((value, index) => new SearchCriteriaInfo(index + 1, value.Table, value.FieldName))
+        .ToList();
+
+    public static List<int> GetDeviceIds(DB db, List<SearchCriteriaInfo> fields, string filter)
+    {
+        var result = new List<int>();
+        var tables = fields.Select(x => x.Table).Distinct().ToList();
+        var fieldNames = fields.Select(x => x.FieldName).Distinct().ToList();
+        var q = from x in db.DeviceSearchMetas
+                where tables.Contains(x.FieldTable)
+                && fieldNames.Contains(x.FieldName)
+                && (string.IsNullOrEmpty(filter) || x.FieldValue.ToLower().Contains(filter.ToLower()))
+                select x.DeviceId;
+        return q.Distinct().ToList();
+
+    }
     public static List<DeviceSearchData> GenerateDeviceSearchDataList(Device device)
     {
         List<DeviceSearchData> r = new List<DeviceSearchData>();
-        //[Key]
-        //public int DeviceId { get; set; }
-        //public int PrimaryKeyId => DeviceId;
-        //public string Name { get; set; }
         r.Add(new DeviceSearchData(device.PrimaryKeyId, nameof(device.Name), device.Name));
-        //public string? Description { get; set; }
         r.Add(new DeviceSearchData(device.PrimaryKeyId, nameof(device.Description), device.Description));
-        //[ForeignKey(nameof(DeviceGroup))]
-        //public int? DeviceGroupId { get; set; }
-        //public DeviceGroup? DeviceGroup { get; set; }
         if (device.DeviceGroup != null)
         {
             r.Add(new DeviceSearchData(device.PrimaryKeyId, device.DeviceGroup));
         }
-        //[ForeignKey(nameof(DeviceType))]
-        //public int? DeviceTypeId { get; set; }
-        //public DeviceType? DeviceType { get; set; }
         if (device.DeviceType != null)
         {
             r.Add(new DeviceSearchData(device.PrimaryKeyId, device.DeviceType));
         }
-        //public string? DeviceModel { get; set; }
         r.Add(new DeviceSearchData(device.PrimaryKeyId, nameof(device.DeviceModel), device.DeviceModel));
-        //public string? SerialNumber { get; set; }
         r.Add(new DeviceSearchData(device.PrimaryKeyId, nameof(device.SerialNumber), device.SerialNumber));
-        //public string? Location { get; set; }
         r.Add(new DeviceSearchData(device.PrimaryKeyId, nameof(device.Location), device.Location));
-        //public string? Note { get; set; }
         r.Add(new DeviceSearchData(device.PrimaryKeyId, nameof(device.Note), device.Note));
-        //public bool IsActive { get; set; }
         r.Add(new DeviceSearchData(device.PrimaryKeyId, nameof(device.IsActive), device.IsActive));
-        //public virtual List<DeviceAddr> DeviceAddresses
         if (device.DeviceAddresses?.Any() == true)
         {
             foreach (var addr in device.DeviceAddresses)
             {
-                // [Key]
-                // public int DeviceAddrId { get; set; }
-                // public int PrimaryKeyId => DeviceAddrId;
-                // [ForeignKey(nameof(Device))]
-                // public int DeviceId { get; set; }
-                // //public Device? Device { get; set; }
-                // [ForeignKey(nameof(AddrType))]
-                // public int AddrTypeId { get; set; }
-                // public AddrType? AddrType { get; set; }
                 if (addr.AddrType != null)
                 {
                     r.Add(new DeviceSearchData(device.PrimaryKeyId, addr.PrimaryKeyId, addr.AddrType));
                 }
-                // public string? Addr { get; set; }
                 r.Add(new DeviceSearchData(DeviceSearchDataTable.DeviceAddress, device.PrimaryKeyId, nameof(addr.Addr), addr.Addr)
                 {
                     DeviceAddrId = addr.PrimaryKeyId
                 });
-                // public string? Username { get; set; }
                 r.Add(new DeviceSearchData(DeviceSearchDataTable.DeviceAddress, device.PrimaryKeyId, nameof(addr.Username), addr.Username)
                 {
                     DeviceAddrId = addr.PrimaryKeyId
                 });
-                // public string? Password { get; set; }
                 //r.Add(new DeviceSearchData(DeviceSearchDataTable.DeviceAddress, device.PrimaryKeyId, nameof(addr.Password), addr.Password)
                 //{
                 //    DeviceAddrId = addr.PrimaryKeyId
@@ -135,13 +142,13 @@ internal static class DeviceSearchDataHelper
     }
     public static async Task SyncDeviceSearchData(DB db, int devicePk, ILogger logger, CancellationToken stoppingToken)
     {
-        var device = await DeviceSearchDataHelper.GetDeviceWithFullData(db, devicePk, stoppingToken);
+        var device = await GetDeviceWithFullData(db, devicePk, stoppingToken);
         if (device == null)
         {
             logger.LogWarning($"Device with ID {devicePk} not found, skipping.");
             return;
         }
-        var list = DeviceSearchDataHelper.GenerateDeviceSearchDataList(device);
+        var list = GenerateDeviceSearchDataList(device);
         await SyncSearchDataFor(db, device.DeviceId, list, logger, stoppingToken);
     }
 }

@@ -138,8 +138,8 @@ namespace FBC.Devices.Models
                             }
                         }
                         break;
-                    //default:
-                    //    throw new ArgumentException($"Unknown parameter key: {param.Key}");
+                        //default:
+                        //    throw new ArgumentException($"Unknown parameter key: {param.Key}");
                 }
             }
 
@@ -244,6 +244,18 @@ namespace FBC.Devices.Models
             q = q.Where(predicate);
             return await q.FirstOrDefaultAsync();
         }
+        private IQueryable<TDataTable> applyLimitations(IQueryable<TDataTable> q,int skip, int take)
+        {
+            if (skip > 0)
+            {
+                q = q.Skip(skip);
+            }
+            if (take > 0)
+            {
+                q = q.Take(take);
+            }
+            return q;
+        }
         /// <summary>
         /// if user not set, results all meters with conditions.
         /// </summary>
@@ -266,6 +278,27 @@ namespace FBC.Devices.Models
                 return q.ToList();
             }
         }
+
+        public DataList<TDataTable> ToList(Expression<Func<TDataTable, bool>> e, int skip, int take, params (string Key, string[] Values)[] extraParams)
+        {
+
+            var q = CreateBaseQuery(true, extraParams);
+            if (q == null)
+            {
+                //if query is null, return empty list
+                return DataList<TDataTable>.Empty;
+            }
+            else
+            {
+                var result = new DataList<TDataTable>()
+                {
+                    NonFilteredCount = q.Count(),
+                };
+                q = applyLimitations(q.Where(e),skip, take);    
+                result.Data = q.ToList();
+                return result;
+            }
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -283,9 +316,10 @@ namespace FBC.Devices.Models
                 {
                     NonFilteredCount = query.Count(),
                 };
-                query = applyFilter(query, args);
+                query = applyLimitations( applyFilter(query, args),args.Skip, args.Take);
                 //result.Data = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList().Select(x => x?.Convert()).ToList();
-                result.Data = query.Skip(args.Skip).Take(args.Take).ToList();
+
+                result.Data = query.ToList();
 
                 return result;
             }
@@ -293,9 +327,6 @@ namespace FBC.Devices.Models
             {
                 return DataList<TDataTable>.Empty;
             }
-
-
-
         }
 
         /// <summary>

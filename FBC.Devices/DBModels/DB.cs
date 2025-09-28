@@ -201,7 +201,7 @@ namespace FBC.Devices.DBModels
             GC.WaitForPendingFinalizers();
         }
 
-        private string CreateBackup()
+        private /*async Task<string>*/string CreateBackup()
         {
             string backupDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DatabaseBackups");
             if (!Directory.Exists(backupDir))
@@ -211,6 +211,9 @@ namespace FBC.Devices.DBModels
 
             string backupPath = Path.Combine(backupDir, $"FBC.Devices_backup_{DateTime.Now:yyyyMMddHHmmss}.db");
             File.Copy(DbPath, backupPath, true);
+            //Alternatif: VACUUM INTO
+            //await db.Database.ExecuteSqlRawAsync($@"VACUUM INTO '{backup}';", ct);
+
             return backupPath;
         }
         #endregion
