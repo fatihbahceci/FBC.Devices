@@ -1,3 +1,4 @@
+using FBC.Devices.API.MediatR;
 using Serilog;
 
 
@@ -22,6 +23,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API for managing devices."
     });
 });
+builder.Services.AddMediator(typeof(Program).Assembly);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -30,6 +32,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseMediatorEndpoints();
 
 app.Run();
