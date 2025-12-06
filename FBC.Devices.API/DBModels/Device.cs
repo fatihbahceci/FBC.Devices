@@ -4,8 +4,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-
-    public class DeviceRepository : EFRepositoryBase<Device, long, DB>
+    public interface IDeviceRepository : IAsyncRepository<Device, long>;
+    //public class DeviceRepository : EFRepositoryBase<Device, long, DB>
+    public class DeviceRepository : EFRepositoryBase<Device, long, DB>, IDeviceRepository
     {
         public DeviceRepository(DB context) : base(context)
         {

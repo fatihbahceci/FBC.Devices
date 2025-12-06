@@ -8,8 +8,8 @@ namespace FBC.Devices.API.Features.Devices;
 public sealed class CreateDevice
 {
     public record Command(Models.DeviceRequestModel Device) : IRequest<long>;
-    internal sealed class CreateDeviceHandler(ILogger<CreateDeviceHandler> logger, IAsyncRepository<Device,long> repo) : IRequestHandler<Command, long>
-    //internal sealed class CreateDeviceHandler(ILogger<CreateDeviceHandler> logger, DeviceRepository repo) : IRequestHandler<Command, long>
+    //internal sealed class CreateDeviceHandler(ILogger<CreateDeviceHandler> logger, IAsyncRepository<Device,long> repo) : IRequestHandler<Command, long>
+    internal sealed class CreateDeviceHandler(ILogger<CreateDeviceHandler> logger, IDeviceRepository repo) : IRequestHandler<Command, long>
     {
 
         public async Task<long> Handle(Command request, CancellationToken token = default)
@@ -26,7 +26,7 @@ public sealed class CreateDeviceEndPoint : IEndpoint
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/devices", async (CreateDevice.Command command, IMediator mediator, CancellationToken token) =>
+        app.MapPost("/devices/create", async (CreateDevice.Command command, IMediator mediator, CancellationToken token) =>
         {
             var deviceId = await mediator.Send(command, token);
             //return Results.Created($"/devices/{deviceId}", new { DeviceId = deviceId });
