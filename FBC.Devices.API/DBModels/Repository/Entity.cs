@@ -6,7 +6,7 @@ namespace FBC.Devices.API.DBModels.Repository;
 
 public enum EntityOperation
 {
-    Add,
+    Create,
     Update,
     Delete
 }

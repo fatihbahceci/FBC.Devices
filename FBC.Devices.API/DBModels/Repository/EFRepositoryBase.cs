@@ -81,7 +81,7 @@ public abstract class EFRepositoryBase<TEntity, TEntityId, TContext>
     {
         switch (operationType)
         {
-            case EntityOperation.Add:
+            case EntityOperation.Create:
                 //entity.StartDate = DateTime.UtcNow;
                 entity.CheckDataFor(operationType, alsoValidate, Query());
                 entity.CreatedDate = DateTimeOffset.UtcNow;
@@ -104,8 +104,8 @@ public abstract class EFRepositoryBase<TEntity, TEntityId, TContext>
         {
             switch (entityOperation)
             {
-                case EntityOperation.Add:
-                    await CheckEntityDataForAsync(EntityOperation.Add, entity, alsoValidate);
+                case EntityOperation.Create:
+                    await CheckEntityDataForAsync(EntityOperation.Create, entity, alsoValidate);
                     break;
                 case EntityOperation.Update:
                     await CheckEntityDataForAsync(EntityOperation.Update, entity, alsoValidate);
@@ -120,7 +120,7 @@ public abstract class EFRepositoryBase<TEntity, TEntityId, TContext>
         }
         switch (entityOperation)
         {
-            case EntityOperation.Add:
+            case EntityOperation.Create:
                 await _context.AddRangeAsync(entities);
                 break;
             case EntityOperation.Update:
@@ -142,8 +142,8 @@ public abstract class EFRepositoryBase<TEntity, TEntityId, TContext>
     {
         switch (operationType)
         {
-            case EntityOperation.Add:
-                await CheckEntityDataForAsync(EntityOperation.Add, entity, alsoValidate);
+            case EntityOperation.Create:
+                await CheckEntityDataForAsync(EntityOperation.Create, entity, alsoValidate);
                 await _context.AddAsync(entity);
                 break;
             case EntityOperation.Update:

@@ -4,15 +4,22 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
+
+    public class DeviceRepository : EFRepositoryBase<Device, long, DB>
+    {
+        public DeviceRepository(DB context) : base(context)
+        {
+        }
+    }
     public class Device : Entity<long,Device>
     {
         public string Name { get; set; }
         public string? Description { get; set; }
         [ForeignKey(nameof(DeviceGroup))]
-        public int? DeviceGroupId { get; set; }
+        public long? DeviceGroupId { get; set; }
         public DeviceGroup? DeviceGroup { get; set; }
         [ForeignKey(nameof(DeviceType))]
-        public int? DeviceTypeId { get; set; }
+        public long? DeviceTypeId { get; set; }
         public DeviceType? DeviceType { get; set; }
         public string? DeviceModel { get; set; }
         public string? SerialNumber { get; set; }

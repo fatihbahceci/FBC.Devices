@@ -79,7 +79,7 @@ namespace FBC.Devices.DBModels
                 }
                 switch (entityOperation)
                 {
-                    case EntityOperation.Add:
+                    case EntityOperation.Create:
                         if (query.Any(x => x.UserName == UserName))
                         {
                             throw new ArgumentException($"User with username '{UserName}' already exists.", nameof(UserName));

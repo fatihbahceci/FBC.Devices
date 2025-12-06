@@ -50,7 +50,7 @@ namespace FBC.Devices.DBModels
                             Roles = C.UserRoles.SysAdmin,
                             Name = "System Administrator"
                         };
-                        user.CheckDataFor(API.DBModels.Repository.EntityOperation.Add, true, new EFRepositoryBase<DBUser, long, DB>(db).Query());
+                        user.CheckDataFor(API.DBModels.Repository.EntityOperation.Create, true, new DBUserRepository(db).Query());
                         db.SysUsers.Add(user);
                         db.SaveChanges();
                     }

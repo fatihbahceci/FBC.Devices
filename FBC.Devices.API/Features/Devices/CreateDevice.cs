@@ -1,18 +1,24 @@
-﻿using FBC.Devices.API.MediatR;
+﻿using FBC.Devices.API.DBModels.Repository;
+using FBC.Devices.API.Features.Devices.Models;
+using FBC.Devices.API.MediatR;
+using FBC.Devices.DBModels;
 
 namespace FBC.Devices.API.Features.Devices;
 
 public sealed class CreateDevice
 {
     public record Command(Models.DeviceRequestModel Device) : IRequest<long>;
-    internal sealed class CreateDeviceHandler(ILogger<CreateDeviceHandler> logger) : IRequestHandler<Command, long>
+    internal sealed class CreateDeviceHandler(ILogger<CreateDeviceHandler> logger, IAsyncRepository<Device,long> repo) : IRequestHandler<Command, long>
+    //internal sealed class CreateDeviceHandler(ILogger<CreateDeviceHandler> logger, DeviceRepository repo) : IRequestHandler<Command, long>
     {
 
         public async Task<long> Handle(Command request, CancellationToken token = default)
         {
             logger.LogInformation("Creating device with Name: {DeviceName}", request.Device.Name);
+            var dto = new DeviceMapper().ToDevice(request.Device);
+            var r = await repo.ApplyOperation(EntityOperation.Create, dto, true);
             //return await _deviceService.CreateDeviceAsync(request.Device, token);
-            return -1;
+            return r.Id;
         }
     }
 }

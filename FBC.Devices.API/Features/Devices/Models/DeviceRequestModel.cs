@@ -1,4 +1,13 @@
-﻿namespace FBC.Devices.API.Features.Devices.Models;
+﻿using FBC.Devices.DBModels;
+using Riok.Mapperly.Abstractions;
+
+namespace FBC.Devices.API.Features.Devices.Models;
+
+[Mapper]
+public partial class DeviceMapper
+{
+    public partial Device ToDevice(DeviceRequestModel deviceDto);
+}
 
 public class DeviceRequestModel
 {

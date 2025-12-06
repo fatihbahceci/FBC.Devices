@@ -1,5 +1,6 @@
 using FBC.Devices.API.DBModels.Repository;
 using FBC.Devices.API.MediatR;
+using FBC.Devices.DBModels;
 using Serilog;
 
 
@@ -24,6 +25,8 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API for managing devices."
     });
 });
+DB.MigrateDB();
+builder.Services.AddDbContext<DB>();
 builder.Services.RegisterRepositories(typeof(Program).Assembly);
 builder.Services.AddMediator(typeof(Program).Assembly);
 var app = builder.Build();
