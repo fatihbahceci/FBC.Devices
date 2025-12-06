@@ -8,7 +8,7 @@ namespace FBC.Devices.API.Features.Devices;
 public sealed class CreateDevice
 {
     public record Command(Models.DeviceRequestModel Device) : IRequest<long>;
-    //internal sealed class CreateDeviceHandler(ILogger<CreateDeviceHandler> logger, IAsyncRepository<Device,long> repo) : IRequestHandler<Command, long>
+    //alternative using: internal sealed class CreateDeviceHandler(ILogger<CreateDeviceHandler> logger, IAsyncRepository<Device,long> repo) : IRequestHandler<Command, long>
     internal sealed class CreateDeviceHandler(ILogger<CreateDeviceHandler> logger, IDeviceRepository repo) : IRequestHandler<Command, long>
     {
 

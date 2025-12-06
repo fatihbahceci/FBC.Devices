@@ -21,13 +21,8 @@ public static class MediatorExtensions
                 .Select(i => new { HandlerType = t, InterfaceType = i }));
         foreach (var handler in handlerTypes)
         {
-            //Tüm örneklerde transient yazılmış. Ben neden scoped yaptım? 
-            //services.AddTransient(handler.InterfaceType, handler.HandlerType);
             services.AddScoped(handler.InterfaceType, handler.HandlerType);
         }
-        // Register IEndpoint implementations
-        //var serviceDescriptors = allAssemblies.SelectMany(assembly => assembly.DefinedTypes.Where(type => type is { IsAbstract: false, IsInterface: false } && type.IsAssignableTo(typeof(IEndpoint))).Select(type => ServiceDescriptor.Transient(typeof(IEndpoint), type)).ToArray());
-        //services.TryAddEnumerable(serviceDescriptors);
 
         var endpointTypes = allAssemblies
             .SelectMany(a => a.DefinedTypes)
@@ -35,8 +30,8 @@ public static class MediatorExtensions
 
         foreach (var endpointType in endpointTypes)
         {
-            services.AddTransient(endpointType);                    // Kendi tipiyle (opsiyonel ama iyi)
-            services.AddTransient(typeof(IEndpoint), endpointType); // IEnumerable<IEndpoint> için
+            services.AddTransient(endpointType);                    // with its own type (optional but good)
+            services.AddTransient(typeof(IEndpoint), endpointType); // for IEnumerable<IEndpoint> 
         }
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IPostConfigureOptions<SwaggerGenOptions>>(new SafeChainedSchemaIdConfigurator()));
@@ -63,14 +58,14 @@ internal sealed class SafeChainedSchemaIdConfigurator : IPostConfigureOptions<Sw
 
         options.SchemaGeneratorOptions.SchemaIdSelector = type =>
         {
-            //// 1. Kullanıcının kuralı varsa önce onu dene
+            //// 1. If user has a rule, try it first.
             //var userResult = existingSelector?.Invoke(type);
 
-            //// 2. Kullanıcı null veya boş string döndüyse → bizim fallback devreye girsin
+            //// 2. If user returned null or empty string → use our fallback.
             //if (!string.IsNullOrEmpty(userResult))
             //    return userResult;
 
-            // 3. Fallback: CreateDevice_Command gibi
+            // 3. Fallback: like CreateDevice_Command.
             return type.DeclaringType != null
                 ? $"{type.DeclaringType.Name}_{type.Name}"
                 : type.Name;
