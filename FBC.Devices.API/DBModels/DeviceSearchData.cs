@@ -20,7 +20,7 @@ public enum DeviceSearchDataTable
 [Index(nameof(FieldTable), nameof(DeviceId), nameof(DeviceTypeId), nameof(DeviceGroupId),
        nameof(DeviceAddrId), nameof(DeviceAddrTypeId), nameof(FieldName),
        IsUnique = true, Name = "UX_DeviceSearchData_Key")]
-public class DeviceSearchData: Entity<long>
+public class DeviceSearchData: Entity<long, DeviceSearchData>
 {
     public DeviceSearchDataTable FieldTable { get; set; }
     public long DeviceId { get; set; }
@@ -97,7 +97,7 @@ public class DeviceSearchData: Entity<long>
             && this.FieldName == other.FieldName;
     }
 
-    public override void CheckDataFor(EntityOperation operation, bool alsoValidate)
+    public override void CheckDataFor(EntityOperation operation, bool alsoValidate, IQueryable<DeviceSearchData> query)
     {
         
     }

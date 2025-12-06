@@ -6,7 +6,7 @@ namespace FBC.Devices.DBModels
     /// <summary>
     /// Firewall, VM, PC, Switch, Router, etc.
     /// </summary>
-    public class DeviceType : Entity<long>
+    public class DeviceType : Entity<long, DeviceType>
     {
         public string Name { get; set; }
         public string? Description { get; set; }
@@ -15,7 +15,7 @@ namespace FBC.Devices.DBModels
             Name = "New Type";
         }
 
-        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate)
+        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate, IQueryable<DeviceType> query)
         {
             if (alsoValidate)
             {

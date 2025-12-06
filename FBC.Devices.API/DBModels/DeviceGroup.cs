@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FBC.Devices.DBModels
 {
-    public class DeviceGroup : Entity<long>
+    public class DeviceGroup : Entity<long,DeviceGroup>
     {
         public string Name { get; set; }
         public string? Description { get; set; }
@@ -13,7 +13,7 @@ namespace FBC.Devices.DBModels
             Name = "New Group";
         }
 
-        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate)
+        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate, IQueryable<DeviceGroup> query)
         {
             if (alsoValidate)
             {

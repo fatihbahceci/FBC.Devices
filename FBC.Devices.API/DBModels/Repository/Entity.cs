@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace FBC.Devices.API.DBModels.Repository;
 
@@ -9,7 +10,9 @@ public enum EntityOperation
     Update,
     Delete
 }
-public abstract class Entity<TId> where TId : IEquatable<TId>
+public abstract class Entity<TId, TEntity> 
+    where TId : IEquatable<TId>
+    where TEntity : Entity<TId, TEntity>
 {
     [Key]
     public TId Id { get; set; }
@@ -36,6 +39,6 @@ public abstract class Entity<TId> where TId : IEquatable<TId>
 
 
    
-    public abstract void CheckDataFor(EntityOperation operation, bool alsoValidate);
+    public abstract void CheckDataFor(EntityOperation operation, bool alsoValidate, IQueryable<TEntity> query);
 }
 

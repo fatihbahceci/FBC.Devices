@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-    public class Device : Entity<long>
+    public class Device : Entity<long,Device>
     {
         public string Name { get; set; }
         public string? Description { get; set; }
@@ -41,7 +41,7 @@ namespace FBC.Devices.DBModels
             return System.Text.Json.JsonSerializer.Deserialize<Device>(System.Text.Json.JsonSerializer.Serialize(this)!)!;
         }
 
-        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate)
+        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate, IQueryable<Device> query)
         {
             if (DeviceTypeId == 0)
             {
@@ -58,7 +58,8 @@ namespace FBC.Devices.DBModels
                 foreach (var i in DeviceAddresses)
                 {
                     i.DeviceId = Id;
-                    i.CheckDataFor(entityOperation, alsoValidate);
+                    //TODO: , IQueryable<DeviceAddr> query parameter needed?
+                    //i.CheckDataFor(entityOperation, alsoValidate);
                 }
             }
             if (alsoValidate)

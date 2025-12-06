@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FBC.Devices.API.DBModels.Repository;
+using Microsoft.EntityFrameworkCore;
 
 namespace FBC.Devices.DBModels
 {
@@ -49,7 +50,7 @@ namespace FBC.Devices.DBModels
                             Roles = C.UserRoles.SysAdmin,
                             Name = "System Administrator"
                         };
-                        user.CheckDataFor(API.DBModels.Repository.EntityOperation.Add, true);
+                        user.CheckDataFor(API.DBModels.Repository.EntityOperation.Add, true, new EFRepositoryBase<DBUser, long, DB>(db).Query());
                         db.SysUsers.Add(user);
                         db.SaveChanges();
                     }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-    public class DeviceAddr : Entity<long>
+    public class DeviceAddr : Entity<long, DeviceAddr>
     {
         [ForeignKey(nameof(Device))]
         public long DeviceId { get; set; }
@@ -20,8 +20,9 @@ namespace FBC.Devices.DBModels
             Addr = string.Empty;
         }
 
-        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate)
-        { if (DeviceId == 0)
+        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate, IQueryable<DeviceAddr> query)
+        {
+            if (DeviceId == 0)
             {
                 DeviceId = 0;
                 //Device = null;

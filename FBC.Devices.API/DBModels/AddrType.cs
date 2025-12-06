@@ -6,7 +6,7 @@ namespace FBC.Devices.DBModels
     /// <summary>
     /// HTTP, RTSP, FTP, SSH, Telnet, etc.
     /// </summary>
-    public class AddrType : Entity<int>
+    public class AddrType : Entity<int, AddrType>
     {
         public string Name { get; set; }
         public AddrType()
@@ -14,7 +14,7 @@ namespace FBC.Devices.DBModels
             Name = "New Address Type";
         }
 
-        public override void CheckDataFor(EntityOperation operation, bool alsoValidate)
+        public override void CheckDataFor(EntityOperation operation, bool alsoValidate, IQueryable<AddrType> query)
         {
             if (alsoValidate)
             {

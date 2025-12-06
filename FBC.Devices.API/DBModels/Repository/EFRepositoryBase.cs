@@ -1,13 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
-using System.Linq.Expressions;
 using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace FBC.Devices.API.DBModels.Repository;
 
-public class EFRepositoryBase<TEntity, TEntityId, TContext>
+public abstract class EFRepositoryBase<TEntity, TEntityId, TContext>
     : IAsyncRepository<TEntity, TEntityId>/* ,IRepository<TEntity, TEntityId>*/
-    where TEntity : Entity<TEntityId>
+    where TEntity : Entity<TEntityId, TEntity>
     where TEntityId : IEquatable<TEntityId>
     where TContext : DbContext
 {
@@ -82,16 +83,16 @@ public class EFRepositoryBase<TEntity, TEntityId, TContext>
         {
             case EntityOperation.Add:
                 //entity.StartDate = DateTime.UtcNow;
-                entity.CheckDataFor(operationType, alsoValidate);
+                entity.CheckDataFor(operationType, alsoValidate, Query());
                 entity.CreatedDate = DateTimeOffset.UtcNow;
                 break;
             case EntityOperation.Update:
                 //entity.StartDate = DateTime.UtcNow;
-                entity.CheckDataFor(operationType, alsoValidate);
+                entity.CheckDataFor(operationType, alsoValidate, Query());
                 entity.UpdatedDate = DateTimeOffset.UtcNow;
                 break;
             case EntityOperation.Delete:
-                entity.CheckDataFor(operationType, alsoValidate);
+                entity.CheckDataFor(operationType, alsoValidate, Query());
                 entity.IsDeleted = true;
                 entity.DeletedDate = DateTimeOffset.UtcNow;
                 break;
@@ -166,7 +167,9 @@ public class EFRepositoryBase<TEntity, TEntityId, TContext>
 }
 
 public interface IAsyncRepository<TEntity, TEntityId> : IQuery<TEntity>
-    where TEntity : Entity<TEntityId> where TEntityId : IEquatable<TEntityId>
+    where TEntity : Entity<TEntityId, TEntity>
+    where TEntityId : IEquatable<TEntityId>
+
 {
     Task<TEntity?> GetAsync(
         Expression<Func<TEntity, bool>> predicate,
@@ -209,3 +212,22 @@ public interface IAsyncRepository<TEntity, TEntityId> : IQuery<TEntity>
 
 }
 
+public static class EFRepositoryBaseExtensions
+{
+    public static IServiceCollection RegisterRepositories(this IServiceCollection services, params Assembly[] assemblies)
+    {
+        var allAssemblies = assemblies.Length > 0 ? assemblies : AppDomain.CurrentDomain.GetAssemblies();
+        var repositoryTypes = allAssemblies
+            .SelectMany(a => a.GetTypes())
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .SelectMany(t => t.GetInterfaces()
+                .Where(i => i.IsGenericType &&
+                            i.GetGenericTypeDefinition() == typeof(IAsyncRepository<,>))
+                .Select(i => new { RepositoryType = t, InterfaceType = i }));
+        foreach (var repository in repositoryTypes)
+        {
+            services.AddScoped(repository.InterfaceType, repository.RepositoryType);
+        }
+        return services;
+    }
+}
