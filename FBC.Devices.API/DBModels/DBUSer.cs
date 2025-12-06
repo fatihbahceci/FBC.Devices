@@ -1,14 +1,10 @@
-﻿using FBC.Devices.DBModels.Helpers;
-using System.ComponentModel.DataAnnotations;
+﻿using FBC.Devices.API.DBModels.Repository;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-    public class DBUser : IHasPrimaryKey
+    public class DBUser : Entity<long>
     {
-        [Key]
-        public int UserId { get; set; }
-        public int PrimaryKeyId => UserId;
         public string UserName { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         /// <summary>
@@ -39,7 +35,8 @@ namespace FBC.Devices.DBModels
                 Roles = string.Join(",", roles.Select(r => r.Trim()).Where(r => !string.IsNullOrWhiteSpace(r)));
             }
         }
-        public void AdjustData(bool validate)
+
+        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate)
         {
             var roles = GetRoles().ToList();
             if (IsSysAdmin && !roles.Contains(C.UserRoles.SysAdmin))
@@ -58,7 +55,7 @@ namespace FBC.Devices.DBModels
                 NewPassword = null; // Clear the new password after hashing
             }
 
-            if (validate)
+            if (alsoValidate)
             {
                 if (string.IsNullOrWhiteSpace(UserName))
                     throw new ArgumentException("UserName cannot be empty", nameof(UserName));

@@ -1,19 +1,27 @@
-﻿using FBC.Devices.DBModels.Helpers;
+﻿using FBC.Devices.API.DBModels.Repository;
 using System.ComponentModel.DataAnnotations;
 
 namespace FBC.Devices.DBModels
 {
-    public class DeviceGroup : IHasPrimaryKey
+    public class DeviceGroup : Entity<long>
     {
-        [Key]
-        public int DeviceGroupId { get; set; }
-        public int PrimaryKeyId => DeviceGroupId;
         public string Name { get; set; }
         public string? Description { get; set; }
 
         public DeviceGroup()
         {
             Name = "New Group";
+        }
+
+        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate)
+        {
+            if (alsoValidate)
+            {
+                if (string.IsNullOrWhiteSpace(Name))
+                {
+                    throw new ValidationException("DeviceGroup Name cannot be empty.");
+                }
+            }
         }
     }
 }

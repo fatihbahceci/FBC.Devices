@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FBC.Devices.API.DBModels.Repository;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
@@ -12,7 +13,6 @@ public enum DeviceSearchDataTable
     DeviceGroup,
     DeviceAddress,
     DeviceAddressType
-
 }
 
 [Index(nameof(DeviceId), Name = "IX_DeviceSearchData_DeviceId")]
@@ -20,30 +20,26 @@ public enum DeviceSearchDataTable
 [Index(nameof(FieldTable), nameof(DeviceId), nameof(DeviceTypeId), nameof(DeviceGroupId),
        nameof(DeviceAddrId), nameof(DeviceAddrTypeId), nameof(FieldName),
        IsUnique = true, Name = "UX_DeviceSearchData_Key")]
-public class DeviceSearchData
+public class DeviceSearchData: Entity<long>
 {
-
-
-    [Key]
-    public int DeviceSearchDataId { get; set; }
     public DeviceSearchDataTable FieldTable { get; set; }
-    public int DeviceId { get; set; }
+    public long DeviceId { get; set; }
     /// <summary>
     /// Null: No binding
     /// </summary>
-    public int? DeviceTypeId { get; set; }
+    public long? DeviceTypeId { get; set; }
     /// <summary>
     /// Null: No binding
     /// </summary>
-    public int? DeviceGroupId { get; set; }
+    public long? DeviceGroupId { get; set; }
     /// <summary>
     /// Null: No binding
     /// </summary>
-    public int? DeviceAddrId { get; set; }
+    public long? DeviceAddrId { get; set; }
     /// <summary>
     /// Null: No binding
     /// </summary>
-    public int? DeviceAddrTypeId { get; set; }
+    public long? DeviceAddrTypeId { get; set; }
 
     [MaxLength(255)]
     public string FieldName { get; set; } = string.Empty;
@@ -73,18 +69,18 @@ public class DeviceSearchData
 
     public DeviceSearchData(int deviceId, DeviceGroup deviceGroup) : this(DeviceSearchDataTable.DeviceGroup, deviceId, nameof(deviceGroup.Name), deviceGroup.Name)
     {
-        this.DeviceGroupId = deviceGroup.DeviceGroupId;
+        this.DeviceGroupId = deviceGroup.Id;
     }
 
     public DeviceSearchData(int deviceId, DeviceType deviceType) : this(DeviceSearchDataTable.DeviceType, deviceId, nameof(deviceType.Name), deviceType.Name)
     {
-        this.DeviceTypeId = deviceType.DeviceTypeId;
+        this.DeviceTypeId = deviceType.Id;
     }
 
     public DeviceSearchData(int deviceId, int addrId, AddrType addrType) : this(DeviceSearchDataTable.DeviceAddressType, deviceId, nameof(addrType.Name), addrType.Name)
     {
         this.DeviceAddrId = addrId;
-        this.DeviceAddrTypeId = addrType.AddrTypeId;
+        this.DeviceAddrTypeId = addrType.Id;
     }
     public string GetKeysStr()
     {
@@ -99,6 +95,11 @@ public class DeviceSearchData
             && this.DeviceAddrId == other.DeviceAddrId
             && this.DeviceAddrTypeId == other.DeviceAddrTypeId
             && this.FieldName == other.FieldName;
+    }
+
+    public override void CheckDataFor(EntityOperation operation, bool alsoValidate)
+    {
+        
     }
 }
 

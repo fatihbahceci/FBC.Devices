@@ -1,14 +1,11 @@
-﻿using FBC.Devices.DBModels.Helpers;
+﻿using FBC.Devices.API.DBModels.Repository;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-    public class Device : IHasPrimaryKey
+    public class Device : Entity<long>
     {
-        [Key]
-        public int DeviceId { get; set; }
-        public int PrimaryKeyId => DeviceId;
         public string Name { get; set; }
         public string? Description { get; set; }
         [ForeignKey(nameof(DeviceGroup))]
@@ -38,7 +35,13 @@ namespace FBC.Devices.DBModels
             DeviceAddresses = new List<DeviceAddr>();
         }
 
-        public void AdjustData(bool validate)
+        public Device Clone()
+        {
+            //Clone with system.text.json
+            return System.Text.Json.JsonSerializer.Deserialize<Device>(System.Text.Json.JsonSerializer.Serialize(this)!)!;
+        }
+
+        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate)
         {
             if (DeviceTypeId == 0)
             {
@@ -54,11 +57,11 @@ namespace FBC.Devices.DBModels
             {
                 foreach (var i in DeviceAddresses)
                 {
-                    i.DeviceId = DeviceId;
-                    i.AdjustData();
+                    i.DeviceId = Id;
+                    i.CheckDataFor(entityOperation, alsoValidate);
                 }
             }
-            if (validate)
+            if (alsoValidate)
             {
                 //var context = new ValidationContext(this, serviceProvider: null, items: null);
                 //var results = new List<ValidationResult>();
@@ -69,11 +72,6 @@ namespace FBC.Devices.DBModels
                 if (DeviceAddresses?.Any(x => string.IsNullOrEmpty(x.Addr)) == true) throw new ValidationException("Device Address is not valid!");
                 if (DeviceAddresses?.Any(x => x.AddrTypeId <= 0) == true) throw new ValidationException("Device Address Type is not valid!");
             }
-        }
-        public Device Clone()
-        {
-            //Clone with system.text.json
-            return System.Text.Json.JsonSerializer.Deserialize<Device>(System.Text.Json.JsonSerializer.Serialize(this)!)!;
         }
     }
 }

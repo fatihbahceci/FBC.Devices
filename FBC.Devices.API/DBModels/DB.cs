@@ -49,7 +49,7 @@ namespace FBC.Devices.DBModels
                             Roles = C.UserRoles.SysAdmin,
                             Name = "System Administrator"
                         };
-                        user.AdjustData(true);
+                        user.CheckDataFor(API.DBModels.Repository.EntityOperation.Add, true);
                         db.SysUsers.Add(user);
                         db.SaveChanges();
                     }

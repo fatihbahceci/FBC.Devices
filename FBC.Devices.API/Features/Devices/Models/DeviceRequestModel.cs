@@ -1,9 +1,4 @@
-﻿using FBC.Devices.DBModels;
-using FBC.Devices.DBModels.Helpers;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace FBC.Devices.API.Features.Devices.Models;
+﻿namespace FBC.Devices.API.Features.Devices.Models;
 
 public class DeviceRequestModel
 {

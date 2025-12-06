@@ -1,4 +1,4 @@
-﻿using FBC.Devices.DBModels.Helpers;
+﻿using FBC.Devices.API.DBModels.Repository;
 using System.ComponentModel.DataAnnotations;
 
 namespace FBC.Devices.DBModels
@@ -6,16 +6,24 @@ namespace FBC.Devices.DBModels
     /// <summary>
     /// Firewall, VM, PC, Switch, Router, etc.
     /// </summary>
-    public class DeviceType : IHasPrimaryKey
+    public class DeviceType : Entity<long>
     {
-        [Key]
-        public int DeviceTypeId { get; set; }
-        public int PrimaryKeyId => DeviceTypeId;
         public string Name { get; set; }
         public string? Description { get; set; }
         public DeviceType()
         {
             Name = "New Type";
+        }
+
+        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate)
+        {
+            if (alsoValidate)
+            {
+                if (string.IsNullOrWhiteSpace(Name))
+                {
+                    throw new ValidationException("DeviceType Name cannot be empty.");
+                }
+            }
         }
     }
 }

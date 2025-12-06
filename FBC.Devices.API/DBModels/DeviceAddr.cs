@@ -1,16 +1,12 @@
-﻿using FBC.Devices.DBModels.Helpers;
-using System.ComponentModel.DataAnnotations;
+﻿using FBC.Devices.API.DBModels.Repository;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-    public class DeviceAddr: IHasPrimaryKey
+    public class DeviceAddr : Entity<long>
     {
-        [Key]
-        public int DeviceAddrId { get; set; }
-        public int PrimaryKeyId => DeviceAddrId;
         [ForeignKey(nameof(Device))]
-        public int DeviceId { get; set; }
+        public long DeviceId { get; set; }
         //public Device? Device { get; set; }
         [ForeignKey(nameof(AddrType))]
         public int AddrTypeId { get; set; }
@@ -21,12 +17,11 @@ namespace FBC.Devices.DBModels
         public bool PeriodicPingCheck { get; set; }
         public DeviceAddr()
         {
-            Addr = "http://";
+            Addr = string.Empty;
         }
 
-        internal void AdjustData()
-        {
-            if (DeviceId == 0)
+        public override void CheckDataFor(EntityOperation entityOperation, bool alsoValidate)
+        { if (DeviceId == 0)
             {
                 DeviceId = 0;
                 //Device = null;
@@ -35,6 +30,13 @@ namespace FBC.Devices.DBModels
             {
                 AddrTypeId = 0;
                 AddrType = null;
+            }
+            if (alsoValidate)
+            {
+                if (string.IsNullOrWhiteSpace(Addr))
+                {
+                    throw new ArgumentException("Addr is required");
+                }
             }
         }
     }

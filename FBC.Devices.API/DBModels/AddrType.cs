@@ -1,18 +1,29 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FBC.Devices.API.DBModels.Repository;
+using System.ComponentModel.DataAnnotations;
 
 namespace FBC.Devices.DBModels
 {
     /// <summary>
     /// HTTP, RTSP, FTP, SSH, Telnet, etc.
     /// </summary>
-    public class AddrType
+    public class AddrType : Entity<int>
     {
-        [Key]
-        public int AddrTypeId { get; set; }
         public string Name { get; set; }
         public AddrType()
         {
             Name = "New Address Type";
+        }
+
+        public override void CheckDataFor(EntityOperation operation, bool alsoValidate)
+        {
+            if (alsoValidate)
+            {
+                if (string.IsNullOrWhiteSpace(Name))
+                {
+                    throw new ValidationException("AddrType Name cannot be empty.");
+                }
+            }
+
         }
     }
 }
