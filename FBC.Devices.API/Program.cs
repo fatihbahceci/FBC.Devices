@@ -1,5 +1,5 @@
 using FBC.Devices.API.DBModels.Repository;
-using FBC.Devices.API.MediatR;
+using FBC.Mediator;
 using FBC.Devices.DBModels;
 using Serilog;
 

@@ -1,6 +1,6 @@
 ﻿using FBC.Devices.API.DBModels.Repository;
 using FBC.Devices.API.Features.Devices.Models;
-using FBC.Devices.API.MediatR;
+using FBC.Mediator;
 using FBC.Devices.DBModels;
 using Microsoft.AspNetCore.Mvc;
 
