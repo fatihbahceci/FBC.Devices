@@ -243,7 +243,7 @@ public static class EFRepositoryBaseExtensions
         }
         return services;
     }
-    
+
     /// <summary>
     /// Registers all non-generic repository interfaces that inherit from IAsyncRepository&lt;,&gt; and their
     /// corresponding implementations with scoped lifetime in the dependency injection container.
@@ -261,18 +261,18 @@ public static class EFRepositoryBaseExtensions
         var target = typeof(IAsyncRepository<,>);
         RegisterRepositoriesForBaseInterface(services, _assemblies);
         var assemblies = _assemblies.Length > 0 ? _assemblies : AppDomain.CurrentDomain.GetAssemblies();
-        // Tüm tipleri tarıyoruz
+        // Scan all non-abstract, non-interface types from the provided assemblies
         var allTypes = assemblies
             .SelectMany(a => a.GetTypes())
             .Where(t => !t.IsAbstract && !t.IsInterface)
             .ToList();
 
-        // Tüm interface’ler: IAsyncRepository<,> türevleri
+        //All interfaces that are derived from IAsyncRepository<,>
         var repoInterfaces = assemblies
             .SelectMany(a => a.GetTypes())
             .Where(t =>
                 t.IsInterface &&
-                t.IsGenericType == false &&               // IDeviceRepository gibi
+                t.IsGenericType == false && //like IDeviceRepository 
                 t.GetInterfaces()
                  .Any(i => i.IsGenericType &&
                            i.GetGenericTypeDefinition() == target)
@@ -282,7 +282,7 @@ public static class EFRepositoryBaseExtensions
         foreach (var repoInterface in repoInterfaces)
         {
             var impl = allTypes.FirstOrDefault(c =>
-                repoInterface.IsAssignableFrom(c)); // interface’i implemente eden sınıf. Birden fazla olursa ilkini alır.
+                repoInterface.IsAssignableFrom(c)); //the class that implements the interface. If there are multiple, it takes the first one.
 
             if (impl != null)
             {

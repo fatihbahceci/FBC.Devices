@@ -7,6 +7,7 @@ namespace FBC.Devices.API.Features.Devices.Models;
 public partial class DeviceMapper
 {
     public partial Device ToDevice(DeviceRequestModel deviceDto);
+    public partial void UpdateDeviceFromModel(DeviceRequestModel deviceModel, Device device);
 }
 
 public class DeviceRequestModel

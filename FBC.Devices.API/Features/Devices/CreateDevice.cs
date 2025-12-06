@@ -30,20 +30,20 @@ public sealed class CreateDeviceEndPoint : IEndpoint
         {
             var deviceId = await mediator.Send(command, token);
             //return Results.Created($"/devices/{deviceId}", new { DeviceId = deviceId });
-            return Results.Created($"/devices/{deviceId}", deviceId);
+            return Results.Ok(deviceId);
         })
             .WithTags("Devices")
             .WithName("CreateDevice")
             .WithSummary("Creates a new device.")
             .WithDescription("Creates a new device and returns the ID of the created device.")
-            .Produces<long>(StatusCodes.Status201Created)
+            .Produces<long>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
     }
 }
 
 
-public sealed class  VoidTest
+public sealed class VoidTest
 {
     public record Command() : IRequest;
     internal sealed class VoidTestHandler(ILogger<VoidTestHandler> logger) : IRequestHandler<Command>

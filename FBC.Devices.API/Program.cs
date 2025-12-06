@@ -38,5 +38,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseMediatorEndpoints();
+app.AddExceptionHandlerMiddleware();
 
 app.Run();
