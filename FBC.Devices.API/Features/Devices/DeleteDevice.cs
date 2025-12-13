@@ -3,6 +3,7 @@ using FBC.Devices.API.Features.Devices.Models;
 using FBC.Mediator;
 using FBC.Devices.DBModels;
 using Microsoft.AspNetCore.Mvc;
+using FBC.DBRepository;
 
 namespace FBC.Devices.API.Features.Devices;
 

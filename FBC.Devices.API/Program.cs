@@ -2,6 +2,7 @@ using FBC.Devices.API.DBModels.Repository;
 using FBC.Mediator;
 using FBC.Devices.DBModels;
 using Serilog;
+using FBC.DBRepository;
 
 
 var builder = WebApplication.CreateBuilder(args);

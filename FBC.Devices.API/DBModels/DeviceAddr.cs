@@ -1,9 +1,9 @@
-﻿using FBC.Devices.API.DBModels.Repository;
+﻿using FBC.DBRepository;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-    public class DeviceAddr : Entity<long, DeviceAddr>
+    public class DeviceAddr : EntityBase<DeviceAddr>
     {
         [ForeignKey(nameof(Device))]
         public long DeviceId { get; set; }

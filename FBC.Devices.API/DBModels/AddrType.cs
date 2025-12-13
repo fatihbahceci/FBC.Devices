@@ -1,4 +1,5 @@
 ﻿using FBC.Devices.API.DBModels.Repository;
+using FBC.DBRepository;
 using System.ComponentModel.DataAnnotations;
 
 namespace FBC.Devices.DBModels
@@ -6,7 +7,7 @@ namespace FBC.Devices.DBModels
     /// <summary>
     /// HTTP, RTSP, FTP, SSH, Telnet, etc.
     /// </summary>
-    public class AddrType : Entity<int, AddrType>
+    public class AddrType : EntityBase<AddrType>
     {
         public string Name { get; set; }
         public AddrType()

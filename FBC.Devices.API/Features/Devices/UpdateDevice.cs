@@ -2,6 +2,7 @@
 using FBC.Devices.API.Features.Devices.Models;
 using FBC.Mediator;
 using FBC.Devices.DBModels;
+using FBC.DBRepository;
 
 namespace FBC.Devices.API.Features.Devices;
 

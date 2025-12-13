@@ -1,4 +1,4 @@
-﻿using FBC.Devices.API.DBModels.Repository;
+﻿using FBC.DBRepository;
 using System.ComponentModel.DataAnnotations;
 
 namespace FBC.Devices.DBModels
@@ -6,7 +6,7 @@ namespace FBC.Devices.DBModels
     /// <summary>
     /// Firewall, VM, PC, Switch, Router, etc.
     /// </summary>
-    public class DeviceType : Entity<long, DeviceType>
+    public class DeviceType : EntityBase<DeviceType>
     {
         public string Name { get; set; }
         public string? Description { get; set; }

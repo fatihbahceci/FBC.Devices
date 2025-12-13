@@ -1,16 +1,18 @@
-﻿using FBC.Devices.API.DBModels.Repository;
+﻿using FBC.DBRepository;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.DBModels
 {
-    public class DBUserRepository : EFRepositoryBase<DBUser, long, DB>
+    public interface IDBUserRepository : IAsyncRepository<DBUser, long>;
+
+    public class DBUserRepository : EFRepositoryBase<DBUser, long, DB>, IDBUserRepository
     {
         public DBUserRepository(DB context) : base(context)
         {
 
         }
     }
-    public class DBUser : Entity<long, DBUser>
+    public class DBUser : EntityBase<DBUser>
     {
         public string UserName { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;

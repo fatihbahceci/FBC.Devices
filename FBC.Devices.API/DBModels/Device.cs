@@ -1,4 +1,4 @@
-﻿using FBC.Devices.API.DBModels.Repository;
+﻿using FBC.DBRepository;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -12,7 +12,7 @@ namespace FBC.Devices.DBModels
         {
         }
     }
-    public class Device : Entity<long,Device>
+    public class Device : EntityBase<Device>
     {
         public string Name { get; set; }
         public string? Description { get; set; }

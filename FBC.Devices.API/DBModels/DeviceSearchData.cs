@@ -1,4 +1,4 @@
-﻿using FBC.Devices.API.DBModels.Repository;
+﻿using FBC.DBRepository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
@@ -20,7 +20,7 @@ public enum DeviceSearchDataTable
 [Index(nameof(FieldTable), nameof(DeviceId), nameof(DeviceTypeId), nameof(DeviceGroupId),
        nameof(DeviceAddrId), nameof(DeviceAddrTypeId), nameof(FieldName),
        IsUnique = true, Name = "UX_DeviceSearchData_Key")]
-public class DeviceSearchData: Entity<long, DeviceSearchData>
+public class DeviceSearchData: EntityBase<DeviceSearchData>
 {
     public DeviceSearchDataTable FieldTable { get; set; }
     public long DeviceId { get; set; }
@@ -50,7 +50,7 @@ public class DeviceSearchData: Entity<long, DeviceSearchData>
     public DeviceSearchData()
     {
     }
-    public DeviceSearchData(DeviceSearchDataTable table, int deviceId, string fieldName, object? fieldValue) : this()
+    public DeviceSearchData(DeviceSearchDataTable table, long deviceId, string fieldName, object? fieldValue) : this()
     {
         this.FieldTable = table;
         this.DeviceId = deviceId;
@@ -63,21 +63,21 @@ public class DeviceSearchData: Entity<long, DeviceSearchData>
             _ => fieldValue.ToString() ?? ""
         };
     }
-    public DeviceSearchData(int deviceId, string fieldName, object? fieldValue) : this(DeviceSearchDataTable.Device, deviceId, fieldName, fieldValue)
+    public DeviceSearchData(long deviceId, string fieldName, object? fieldValue) : this(DeviceSearchDataTable.Device, deviceId, fieldName, fieldValue)
     {
     }
 
-    public DeviceSearchData(int deviceId, DeviceGroup deviceGroup) : this(DeviceSearchDataTable.DeviceGroup, deviceId, nameof(deviceGroup.Name), deviceGroup.Name)
+    public DeviceSearchData(long deviceId, DeviceGroup deviceGroup) : this(DeviceSearchDataTable.DeviceGroup, deviceId, nameof(deviceGroup.Name), deviceGroup.Name)
     {
         this.DeviceGroupId = deviceGroup.Id;
     }
 
-    public DeviceSearchData(int deviceId, DeviceType deviceType) : this(DeviceSearchDataTable.DeviceType, deviceId, nameof(deviceType.Name), deviceType.Name)
+    public DeviceSearchData(long deviceId, DeviceType deviceType) : this(DeviceSearchDataTable.DeviceType, deviceId, nameof(deviceType.Name), deviceType.Name)
     {
         this.DeviceTypeId = deviceType.Id;
     }
 
-    public DeviceSearchData(int deviceId, int addrId, AddrType addrType) : this(DeviceSearchDataTable.DeviceAddressType, deviceId, nameof(addrType.Name), addrType.Name)
+    public DeviceSearchData(long deviceId, long addrId, AddrType addrType) : this(DeviceSearchDataTable.DeviceAddressType, deviceId, nameof(addrType.Name), addrType.Name)
     {
         this.DeviceAddrId = addrId;
         this.DeviceAddrTypeId = addrType.Id;
@@ -99,7 +99,6 @@ public class DeviceSearchData: Entity<long, DeviceSearchData>
 
     public override void CheckDataFor(EntityOperation operation, bool alsoValidate, IQueryable<DeviceSearchData> query)
     {
-        
     }
 }
 

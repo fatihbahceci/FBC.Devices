@@ -29,4 +29,8 @@
     <Folder Include="Migrations\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\FBC.DBRepository\FBC.DBRepository.csproj" />
+  </ItemGroup>
+
 </Project>

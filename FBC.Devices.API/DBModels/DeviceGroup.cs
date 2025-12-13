@@ -1,9 +1,9 @@
-﻿using FBC.Devices.API.DBModels.Repository;
+﻿using FBC.DBRepository;
 using System.ComponentModel.DataAnnotations;
 
 namespace FBC.Devices.DBModels
 {
-    public class DeviceGroup : Entity<long,DeviceGroup>
+    public class DeviceGroup : EntityBase<DeviceGroup>
     {
         public string Name { get; set; }
         public string? Description { get; set; }
