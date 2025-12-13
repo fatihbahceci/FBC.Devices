@@ -9,7 +9,7 @@ namespace FBC.Devices.DBModels
         public long DeviceId { get; set; }
         //public Device? Device { get; set; }
         [ForeignKey(nameof(AddrType))]
-        public int AddrTypeId { get; set; }
+        public long AddrTypeId { get; set; }
         public AddrType? AddrType { get; set; }
         public string? Addr { get; set; }
         public string? Username { get; set; }
