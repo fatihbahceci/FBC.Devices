@@ -34,6 +34,9 @@ public class Filter
 
     public IEnumerable<Filter>? Filters { get; set; }
 
+
+    public bool CaseInsensitive { get; set; }
+    //public string? Culture { get; set; } // "tr-TR", "en-US", null
     public Filter()
     {
         Field = string.Empty;
@@ -77,8 +80,6 @@ public enum SortDirection
 }
 public static class IQueryableDynamicFilterExtensions
 {
-    //private static readonly string[] _orders = { "asc", "desc" };
-    //private static readonly string[] _logics = { "and", "or" };
 
     private static readonly IDictionary<FilterOperator, string> _operators = new Dictionary<FilterOperator, string>
         {
@@ -95,7 +96,12 @@ public static class IQueryableDynamicFilterExtensions
         { FilterOperator.contains, "Contains" },
         { FilterOperator.doesnotcontain, "!Contains" }
     };
-
+    private static string Normalize(string expr, bool caseInsensitive)
+    {
+        return caseInsensitive
+            ? $"{expr}.ToLower()"
+            : expr;
+    }
 
     public static IQueryable<T> ToDynamic<T>(this IQueryable<T> query, DynamicQuery dynamicQuery)
     {
@@ -162,14 +168,32 @@ public static class IQueryableDynamicFilterExtensions
         string comparison = _operators[filter.Operator];
         StringBuilder where = new();
 
+        string fieldExpr = $"np({filter.Field})";
+        string valueExpr = $"@{index}";
+
+        if (filter.CaseInsensitive && filter.Value != null)
+        {
+            fieldExpr = Normalize(fieldExpr, true);
+            valueExpr = $"{valueExpr}.ToLower()";
+        }
+
+        //if (!string.IsNullOrEmpty(filter.Value))
+        //{
+        //    if (filter.Operator == FilterOperator.doesnotcontain)
+        //        where.Append($"(!np({filter.Field}).{comparison}(@{index.ToString()}))");
+        //    else if (comparison is "StartsWith" or "EndsWith" or "Contains")
+        //        where.Append($"(np({filter.Field}).{comparison}(@{index.ToString()}))");
+        //    else
+        //        where.Append($"np({filter.Field}) {comparison} @{index.ToString()}");
+        //}
         if (!string.IsNullOrEmpty(filter.Value))
         {
             if (filter.Operator == FilterOperator.doesnotcontain)
-                where.Append($"(!np({filter.Field}).{comparison}(@{index.ToString()}))");
+                where.Append($"(!{fieldExpr}.{comparison}({valueExpr}))");
             else if (comparison is "StartsWith" or "EndsWith" or "Contains")
-                where.Append($"(np({filter.Field}).{comparison}(@{index.ToString()}))");
+                where.Append($"({fieldExpr}.{comparison}({valueExpr}))");
             else
-                where.Append($"np({filter.Field}) {comparison} @{index.ToString()}");
+                where.Append($"{fieldExpr} {comparison} {valueExpr}");
         }
         else if (filter.Operator is FilterOperator.isnull or FilterOperator.isnotnull)
         {
