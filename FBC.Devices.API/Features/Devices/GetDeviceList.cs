@@ -51,7 +51,7 @@ public sealed class GetDeviceList
         public async Task<PaginateResponseModel<Device>> Handle(Command request, CancellationToken token = default)
         {
             logger.LogInformation("Get devices");
-            return await repo.GetListAsync();
+            return await repo.GetListAsync(includeDeletedRecords: request.RetrieveEvenMarkedDeleted);
         }
     }
 }
