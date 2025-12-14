@@ -44,14 +44,17 @@ namespace FBC.Devices.API.Features.Devices;
  */
 public sealed class GetDeviceList
 {
-    public record Command(bool RetrieveEvenMarkedDeleted = false) : IRequest<PaginateResponseModel<Device>>;
+    public record Command(DynamicQuery? query, bool RetrieveEvenMarkedDeleted = false) : IRequest<PaginateResponseModel<Device>>;
     internal sealed class GetDeviceListHandler(ILogger<GetDeviceListHandler> logger, IDeviceRepository repo) : IRequestHandler<Command, PaginateResponseModel<Device>>
     {
 
         public async Task<PaginateResponseModel<Device>> Handle(Command request, CancellationToken token = default)
         {
             logger.LogInformation("Get devices");
-            return await repo.GetListAsync(includeDeletedRecords: request.RetrieveEvenMarkedDeleted);
+            return
+                request.query is not null
+                ? await repo.GetListAsync(repo.GetQueryable().ToDynamic(request.query), includeDeletedRecords: request.RetrieveEvenMarkedDeleted)
+                : await repo.GetListAsync(includeDeletedRecords: request.RetrieveEvenMarkedDeleted);
         }
     }
 }
@@ -60,10 +63,10 @@ public sealed class GetDeviceListEndPoint : IEndpoint
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         //Use MapPost if you want to pass complex object in body
-        app.MapGet("/devices/GetDeviceList", async (bool RetrieveEvenMarkedDeleted /*GetDeviceList.Command command*/, IMediator mediator, CancellationToken token) =>
+        app.MapPost("/devices/GetDeviceList", async (GetDeviceList.Command command, IMediator mediator, CancellationToken token) =>
         {
             //var device = await mediator.Send(command, token);
-            var device = await mediator.Send(new GetDeviceList.Command(RetrieveEvenMarkedDeleted), token);
+            var device = await mediator.Send(command, token);
             return Results.Ok(device);
         })
             .WithTags("Devices")
@@ -71,6 +74,7 @@ public sealed class GetDeviceListEndPoint : IEndpoint
             .WithSummary("Get Device List")
             .WithDescription("Retrieves the list of devices.")
             .Produces<PaginateResponseModel<Device>>(StatusCodes.Status200OK)
+            .Produces<DynamicQuery>()
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);

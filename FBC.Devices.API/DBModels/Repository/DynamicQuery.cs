@@ -5,7 +5,7 @@ namespace FBC.Devices.API.DBModels.Repository;
 
 public class DynamicQuery
 {
-    public IEnumerable<Sort> Sort { get; set; }
+    public IEnumerable<Sort>? Sort { get; set; }
 
     public Filter? Filter { get; set; }
 
@@ -28,47 +28,74 @@ public class Filter
 
     public string? Value { get; set; }
 
-    public string Operator { get; set; }
+    public FilterOperator Operator { get; set; }
 
-    public string? Logic { get; set; }
+    public FilterLogic Logic { get; set; }
 
     public IEnumerable<Filter>? Filters { get; set; }
 
     public Filter()
     {
         Field = string.Empty;
-        Operator = string.Empty;
+        Operator = FilterOperator.none;
     }
 
-    public Filter(string field, string @operator)
+    public Filter(string field, FilterOperator @operator)
     {
         Field = field;
         Operator = @operator;
     }
 }
 
-
-
+public enum FilterOperator
+{
+    none,
+    eq,
+    neq,
+    lt,
+    lte,
+    gt,
+    gte,
+    isnull,
+    isnotnull,
+    startswith,
+    endswith,
+    contains,
+    doesnotcontain
+}
+public enum FilterLogic
+{
+    none,
+    and,
+    or
+}
+public enum SortDirection
+{
+    none,
+    asc,
+    desc
+}
 public static class IQueryableDynamicFilterExtensions
 {
-    private static readonly string[] _orders = { "asc", "desc" };
-    private static readonly string[] _logics = { "and", "or" };
+    //private static readonly string[] _orders = { "asc", "desc" };
+    //private static readonly string[] _logics = { "and", "or" };
 
-    private static readonly IDictionary<string, string> _operators = new Dictionary<string, string>
-    {
-        { "eq", "=" },
-        { "neq", "!=" },
-        { "lt", "<" },
-        { "lte", "<=" },
-        { "gt", ">" },
-        { "gte", ">=" },
-        { "isnull", "== null" },
-        { "isnotnull", "!= null" },
-        { "startswith", "StartsWith" },
-        { "endswith", "EndsWith" },
-        { "contains", "Contains" },
-        { "doesnotcontain", "Contains" }
+    private static readonly IDictionary<FilterOperator, string> _operators = new Dictionary<FilterOperator, string>
+        {
+        { FilterOperator.eq, "=" },
+        { FilterOperator.neq, "!=" },
+        { FilterOperator.lt, "<" },
+        { FilterOperator.lte, "<=" },
+        { FilterOperator.gt, ">" },
+        { FilterOperator.gte, ">=" },
+        { FilterOperator.isnull, "== null" },
+        { FilterOperator.isnotnull, "!= null" },
+        { FilterOperator.startswith, "StartsWith" },
+        { FilterOperator.endswith, "EndsWith" },
+        { FilterOperator.contains, "Contains" },
+        { FilterOperator.doesnotcontain, "!Contains" }
     };
+
 
     public static IQueryable<T> ToDynamic<T>(this IQueryable<T> query, DynamicQuery dynamicQuery)
     {
@@ -96,7 +123,7 @@ public static class IQueryableDynamicFilterExtensions
         {
             if (string.IsNullOrEmpty(item.Field))
                 throw new ArgumentException("Invalid Field");
-            if (string.IsNullOrEmpty(item.Dir) || !_orders.Contains(item.Dir))
+            if (item.Dir == SortDirection.none)
                 throw new ArgumentException("Invalid Order Type");
         }
 
@@ -128,7 +155,7 @@ public static class IQueryableDynamicFilterExtensions
     {
         if (string.IsNullOrEmpty(filter.Field))
             throw new ArgumentException("Invalid Field");
-        if (string.IsNullOrEmpty(filter.Operator) || !_operators.ContainsKey(filter.Operator))
+        if (filter.Operator == FilterOperator.none)
             throw new ArgumentException("Invalid Operator");
 
         int index = filters.IndexOf(filter);
@@ -137,21 +164,21 @@ public static class IQueryableDynamicFilterExtensions
 
         if (!string.IsNullOrEmpty(filter.Value))
         {
-            if (filter.Operator == "doesnotcontain")
+            if (filter.Operator == FilterOperator.doesnotcontain)
                 where.Append($"(!np({filter.Field}).{comparison}(@{index.ToString()}))");
             else if (comparison is "StartsWith" or "EndsWith" or "Contains")
                 where.Append($"(np({filter.Field}).{comparison}(@{index.ToString()}))");
             else
                 where.Append($"np({filter.Field}) {comparison} @{index.ToString()}");
         }
-        else if (filter.Operator is "isnull" or "isnotnull")
+        else if (filter.Operator is FilterOperator.isnull or FilterOperator.isnotnull)
         {
             where.Append($"np({filter.Field}) {comparison}");
         }
 
-        if (filter.Logic is not null && filter.Filters is not null && filter.Filters.Any())
+        if (filter.Logic != FilterLogic.none && filter.Filters?.Any() == true)
         {
-            if (!_logics.Contains(filter.Logic))
+            if (filter.Logic == FilterLogic.none)
                 throw new ArgumentException("Invalid Logic");
             return $"{where} {filter.Logic} ({string.Join(separator: $" {filter.Logic} ", value: filter.Filters.Select(f => Transform(f, filters)).ToArray())})";
         }
@@ -165,15 +192,15 @@ public class Sort
 {
     public string Field { get; set; }
 
-    public string Dir { get; set; }
+    public SortDirection Dir { get; set; }
 
     public Sort()
     {
         Field = string.Empty;
-        Dir = string.Empty;
+        Dir = SortDirection.none;
     }
 
-    public Sort(string field, string dir)
+    public Sort(string field, SortDirection dir)
     {
         Field = field;
         Dir = dir;
