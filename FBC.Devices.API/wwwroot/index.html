@@ -177,9 +177,11 @@
                                         </h2>
                                         <div :id="'details-' + device.id" class="accordion-collapse collapse">
                                             <div class="accordion-body py-2">
-                                                <div><small class="text-muted">Model:</small> <span x-text="device.deviceModel || '-'"></span></div>
-                                                <div><small class="text-muted">S/N:</small> <span x-text="device.serialNumber || '-'"></span></div>
-                                                <div><small class="text-muted">Location:</small> <span x-text="device.location || '-'"></span></div>
+                                                <table class="table table-sm table-borderless mb-0 small">
+                                                    <tr><td class="text-muted text-nowrap" style="width:1%;padding-right:.75rem;">Model</td><td x-text="device.deviceModel || '-'"></td></tr>
+                                                    <tr><td class="text-muted text-nowrap" style="width:1%;padding-right:.75rem;">S/N</td><td x-text="device.serialNumber || '-'"></td></tr>
+                                                    <tr><td class="text-muted text-nowrap" style="width:1%;padding-right:.75rem;">Location</td><td x-text="device.location || '-'"></td></tr>
+                                                </table>
                                             </div>
                                         </div>
                                     </div>
@@ -193,7 +195,7 @@
                                         </h2>
                                         <div :id="'note-' + device.id" class="accordion-collapse collapse">
                                             <div class="accordion-body py-2">
-                                                <pre class="mb-0 small" style="white-space:pre-wrap;word-break:break-word;" x-text="device.note || '-'"></pre>
+                                                <pre class="mb-0 small font-monospace" style="white-space:pre-wrap;word-break:break-word;font-size:.8rem;" x-text="device.note || '-'"></pre>
                                             </div>
                                         </div>
                                     </div>
