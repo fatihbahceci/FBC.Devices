@@ -21,7 +21,7 @@ public sealed class DeviceCreate
 
     public record DeviceAddrDto(int AddrTypeId, string? Addr, string? Username, string? Password, bool PeriodicPingCheck);
 
-    internal sealed class Handler(DeviceRepository deviceRepo, AppDbContext db)
+    internal sealed class Handler(DeviceRepository deviceRepo, DeviceAddrRepository deviceAddrRepo)
         : IRequestHandler<Command, int>
     {
         public async Task<int> Handle(Command request, CancellationToken token = default)
@@ -38,8 +38,7 @@ public sealed class DeviceCreate
                 Note = request.Note,
                 IsActive = request.IsActive
             };
-            device.AdjustData(false);
-            await deviceRepo.ApplyOperation(EntityOperation.Create, device, alsoValidate: false);
+            await deviceRepo.ApplyOperation(EntityOperation.Create, device, alsoValidate: true);
 
             if (request.Addresses?.Any() == true)
             {
@@ -54,10 +53,8 @@ public sealed class DeviceCreate
                         Password = addrDto.Password,
                         PeriodicPingCheck = addrDto.PeriodicPingCheck
                     };
-                    addr.AdjustData();
-                    db.DeviceAddresses.Add(addr);
+                    deviceAddrRepo.ApplyOperation(EntityOperation.Create, addr, alsoValidate: true).GetAwaiter().GetResult();
                 }
-                await db.SaveChangesAsync(token);
             }
 
             return device.Id;

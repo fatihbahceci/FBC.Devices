@@ -1,3 +1,4 @@
+using FBC.Devices.API.Data.Repositories;
 using FBC.Devices.API.Models;
 using FBC.Devices.API.Services;
 using Microsoft.EntityFrameworkCore;
@@ -68,9 +69,8 @@ public class AppDbContext : DbContext
                     Roles = Constants.UserRoles.SysAdmin,
                     Name = "System Administrator"
                 };
-                user.AdjustData(true);
-                db.SysUsers.Add(user);
-                db.SaveChanges();
+                var repo = new UserRepository(db);
+                repo.ApplyOperation(DBRepository.EntityOperation.Create, user, true).GetAwaiter().GetResult();
             }
 
             if (!db.AddrTypes.Any())

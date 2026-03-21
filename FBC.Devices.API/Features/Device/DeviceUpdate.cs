@@ -23,7 +23,7 @@ public sealed class DeviceUpdate
 
     public record DeviceAddrDto(int Id, int AddrTypeId, string? Addr, string? Username, string? Password, bool PeriodicPingCheck);
 
-    internal sealed class Handler(DeviceRepository deviceRepo, AppDbContext db)
+    internal sealed class Handler(DeviceRepository deviceRepo, DeviceAddrRepository deviceAddrRepo)
         : IRequestHandler<Command>
     {
         public async Task Handle(Command request, CancellationToken token = default)
@@ -40,23 +40,19 @@ public sealed class DeviceUpdate
             device.Location = request.Location;
             device.Note = request.Note;
             device.IsActive = request.IsActive;
-            device.AdjustData(false);
-
-            await deviceRepo.ApplyOperation(EntityOperation.Update, device, alsoValidate: false);
+            await deviceRepo.ApplyOperation(EntityOperation.Update, device, alsoValidate: true);
 
             // Handle addresses
             if (request.Addresses != null)
             {
-                var existingAddrs = await db.DeviceAddresses
-                    .Where(a => a.DeviceId == request.Id)
-                    .ToListAsync(token);
-
+                var existingAddrs = (await deviceAddrRepo.GetListAsync(a => a.DeviceId == request.Id))?.Items ?? new List<Models.DeviceAddr>();
                 var incomingIds = request.Addresses.Where(a => a.Id > 0).Select(a => a.Id).ToHashSet();
 
                 // Delete removed addresses
                 var toDelete = existingAddrs.Where(a => !incomingIds.Contains(a.Id)).ToList();
                 if (toDelete.Any())
-                    db.DeviceAddresses.RemoveRange(toDelete);
+                    await deviceAddrRepo.ApplyOperationRange(EntityOperation.Delete, toDelete, true);
+
 
                 // Update existing and add new
                 foreach (var addrDto in request.Addresses)
@@ -71,7 +67,8 @@ public sealed class DeviceUpdate
                             existing.Username = addrDto.Username;
                             existing.Password = addrDto.Password;
                             existing.PeriodicPingCheck = addrDto.PeriodicPingCheck;
-                            existing.AdjustData();
+                            await deviceAddrRepo.ApplyOperation(EntityOperation.Update, existing, alsoValidate: true);
+
                         }
                     }
                     else
@@ -85,12 +82,9 @@ public sealed class DeviceUpdate
                             Password = addrDto.Password,
                             PeriodicPingCheck = addrDto.PeriodicPingCheck
                         };
-                        newAddr.AdjustData();
-                        db.DeviceAddresses.Add(newAddr);
+                        await deviceAddrRepo.ApplyOperation(EntityOperation.Create, newAddr, alsoValidate: true);
                     }
                 }
-
-                await db.SaveChangesAsync(token);
             }
         }
     }

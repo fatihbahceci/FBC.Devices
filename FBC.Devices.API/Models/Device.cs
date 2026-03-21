@@ -4,7 +4,7 @@ using FBC.DBRepository;
 
 namespace FBC.Devices.API.Models;
 
-public class Device : Entity<int, Device>
+public class Device : APIBaseEntity<Device>, IEntityHasSoftDeleteFeature
 {
     public string Name { get; set; } = "New Device";
     public string? Description { get; set; }
@@ -29,8 +29,10 @@ public class Device : Entity<int, Device>
         get => _deviceAddresses ??= new List<DeviceAddr>();
         set => _deviceAddresses = value ?? new List<DeviceAddr>();
     }
+    public bool IsDeleted { get; set; }
 
-    public void AdjustData(bool validate)
+
+    public override async Task CheckDataForAsync(EntityOperation operation, bool alsoValidate, IQueryable<Device> query)
     {
         if (DeviceTypeId == 0)
         {
@@ -47,15 +49,8 @@ public class Device : Entity<int, Device>
             foreach (var addr in DeviceAddresses)
             {
                 addr.DeviceId = Id;
-                addr.AdjustData();
+                await addr.CheckDataForAsync(operation, alsoValidate, null);
             }
-        }
-        if (validate)
-        {
-            if (DeviceAddresses?.Any(x => string.IsNullOrEmpty(x.Addr)) == true)
-                throw new ValidationException("Device Address is not valid!");
-            if (DeviceAddresses?.Any(x => x.AddrTypeId <= 0) == true)
-                throw new ValidationException("Device Address Type is not valid!");
         }
     }
 }

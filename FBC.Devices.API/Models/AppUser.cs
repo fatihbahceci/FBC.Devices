@@ -1,9 +1,11 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using FBC.DBRepository;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.API.Models;
 
-public class AppUser : Entity<int, AppUser>
+public class AppUser : APIBaseEntity<AppUser>
 {
     public string UserName { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
@@ -27,7 +29,7 @@ public class AppUser : Entity<int, AppUser>
             : string.Join(",", roles.Select(r => r.Trim()).Where(r => !string.IsNullOrWhiteSpace(r)));
     }
 
-    public void AdjustData(bool validate)
+    public override async Task CheckDataForAsync(EntityOperation operation, bool alsoValidate, IQueryable<AppUser> query)
     {
         var roles = GetRoles().ToList();
         if (IsSysAdmin && !roles.Contains(Constants.UserRoles.SysAdmin))
@@ -42,7 +44,7 @@ public class AppUser : Entity<int, AppUser>
             NewPassword = null;
         }
 
-        if (validate)
+        if (alsoValidate)
         {
             if (string.IsNullOrWhiteSpace(UserName))
                 throw new ArgumentException("UserName cannot be empty", nameof(UserName));
@@ -50,6 +52,32 @@ public class AppUser : Entity<int, AppUser>
                 throw new ArgumentException("Password cannot be empty", nameof(Password));
             if (string.IsNullOrWhiteSpace(Name))
                 throw new ArgumentException("Name cannot be empty", nameof(Name));
+            if (query != null)
+            {
+                switch (operation)
+                {
+                    case EntityOperation.Create:
+                    case EntityOperation.Update:
+                        var exists = await query.AnyAsync(u => u.UserName == UserName && u.Id != Id);
+                        if (exists)
+                        {
+                            throw new ArgumentException("UserName already exists", nameof(UserName));
+                        }
+                        if (operation == EntityOperation.Update)
+                        {
+                            var current = await query.FirstOrDefaultAsync(u => u.Id == Id);
+                            if (current != null && current.IsSysAdmin && !IsSysAdmin)
+                            {
+                                var sysAdminCount = await query.CountAsync(u => u.IsSysAdmin);
+                                if (sysAdminCount <= 1)
+                                {
+                                    throw new InvalidOperationException("Cannot remove SysAdmin role from the last SysAdmin user");
+                                }
+                            }
+                        }
+                        break;
+                }
+            }
         }
     }
 }

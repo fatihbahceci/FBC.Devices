@@ -22,8 +22,7 @@ public sealed class DeviceAddrCreate
                 Password = request.Password,
                 PeriodicPingCheck = request.PeriodicPingCheck
             };
-            entity.AdjustData();
-            await repo.ApplyOperation(EntityOperation.Create, entity, alsoValidate: false);
+            await repo.ApplyOperation(EntityOperation.Create, entity, alsoValidate: true);
             return entity.Id;
         }
     }

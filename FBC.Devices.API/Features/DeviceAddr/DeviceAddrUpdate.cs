@@ -21,8 +21,7 @@ public sealed class DeviceAddrUpdate
             entity.Username = request.Username;
             entity.Password = request.Password;
             entity.PeriodicPingCheck = request.PeriodicPingCheck;
-            entity.AdjustData();
-            await repo.ApplyOperation(EntityOperation.Update, entity, alsoValidate: false);
+            await repo.ApplyOperation(EntityOperation.Update, entity, alsoValidate: true);
         }
     }
 }
