@@ -29,10 +29,39 @@
     min-width: 0;
 }
 
-/* Device cards (home page) */
-.device-card {
-    min-width: 400px;
-    max-width: 500px;
+/* Device card grid - flex wrap, last row items stretch to fill */
+.device-card-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.device-card-wrapper {
+    flex: 1 1 420px;
+    max-width: 100%;
+    min-width: 350px;
+}
+/* When there's only 1 card in last row, limit its width */
+@media (min-width: 900px) {
+    .device-card-wrapper {
+        max-width: calc(50% - 0.5rem);
+    }
+}
+@media (min-width: 1400px) {
+    .device-card-wrapper {
+        max-width: calc(33.333% - 0.67rem);
+    }
+}
+
+/* Notes pre tag styling */
+.card pre {
+    font-family: inherit;
+    margin: 0;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+[data-bs-theme="dark"] .card pre {
+    color: #dee2e6;
 }
 
 /* Status badges */
@@ -67,4 +96,42 @@
 /* Tabulator overrides */
 .tabulator .tabulator-header .tabulator-col {
     border-right: 1px solid #dee2e6;
+}
+
+/* Dark mode Tabulator */
+[data-bs-theme="dark"] .tabulator {
+    background-color: #212529;
+    color: #dee2e6;
+    border-color: #495057;
+}
+[data-bs-theme="dark"] .tabulator .tabulator-header {
+    background-color: #2b3035;
+    color: #dee2e6;
+    border-color: #495057;
+}
+[data-bs-theme="dark"] .tabulator .tabulator-header .tabulator-col {
+    background-color: #2b3035;
+    border-color: #495057;
+}
+[data-bs-theme="dark"] .tabulator .tabulator-row {
+    background-color: #212529;
+    color: #dee2e6;
+    border-color: #495057;
+}
+[data-bs-theme="dark"] .tabulator .tabulator-row:hover {
+    background-color: #2b3035;
+}
+[data-bs-theme="dark"] .tabulator .tabulator-row.tabulator-row-even {
+    background-color: #1a1d21;
+}
+[data-bs-theme="dark"] .tabulator .tabulator-footer {
+    background-color: #2b3035;
+    color: #dee2e6;
+    border-color: #495057;
+}
+[data-bs-theme="dark"] .tabulator input,
+[data-bs-theme="dark"] .tabulator select {
+    background-color: #2b3035;
+    color: #dee2e6;
+    border-color: #495057;
 }

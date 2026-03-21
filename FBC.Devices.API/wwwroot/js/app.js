@@ -44,11 +44,18 @@ document.addEventListener('alpine:init', () => {
         page: 'home',
         user: null,
         sidebarOpen: true,
+        darkMode: false,
 
         init() {
             const userInfo = localStorage.getItem('user_info');
             if (userInfo) {
                 this.user = JSON.parse(userInfo);
+            }
+            // Restore theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                this.darkMode = true;
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
             }
             this.handleHash();
             window.addEventListener('hashchange', () => this.handleHash());
@@ -112,6 +119,12 @@ document.addEventListener('alpine:init', () => {
 
         toggleSidebar() {
             this.sidebarOpen = !this.sidebarOpen;
+        },
+
+        toggleTheme() {
+            this.darkMode = !this.darkMode;
+            document.documentElement.setAttribute('data-bs-theme', this.darkMode ? 'dark' : 'light');
+            localStorage.setItem('theme', this.darkMode ? 'dark' : 'light');
         }
     });
 });
