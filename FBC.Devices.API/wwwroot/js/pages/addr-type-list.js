@@ -4,6 +4,8 @@ function addrTypeListPage() {
         newItem: { name: '' },
         editItem: null,
         editModal: null,
+        columnPickerOpen: false,
+        columnDefs: [],
 
         async init() {
             this.initTable();
@@ -12,25 +14,36 @@ function addrTypeListPage() {
 
         initTable() {
             const self = this;
+            const columns = [
+                { title: 'ID', field: 'id', width: 70, headerFilter: true },
+                { title: i18n.t('common.name'), field: 'name', headerFilter: true },
+                {
+                    title: i18n.t('common.actions'), field: 'id', width: 120, hozAlign: 'center',
+                    formatter: () => `<button class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>`,
+                    cellClick: (e, cell) => {
+                        if (e.target.closest('.btn-outline-primary')) self.openEdit(cell.getData());
+                        if (e.target.closest('.btn-outline-danger')) self.deleteItem(cell.getData().id);
+                    }
+                }
+            ];
+            this.columnDefs = columns.filter(c => c.title !== i18n.t('common.actions'))
+                .map(c => ({ title: c.title, field: c.field, visible: true }));
+
             this.table = new Tabulator('#addr-type-table', {
                 layout: 'fitColumns',
                 pagination: true,
                 paginationSize: 25,
+                paginationSizeSelector: [10, 25, 50, 100],
                 ajaxURL: '/api/addr-types',
                 ajaxConfig: { headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` } },
-                columns: [
-                    { title: 'ID', field: 'id', width: 70, headerFilter: true },
-                    { title: i18n.t('common.name'), field: 'name', headerFilter: true },
-                    {
-                        title: i18n.t('common.actions'), field: 'id', width: 120, hozAlign: 'center',
-                        formatter: () => `<button class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>`,
-                        cellClick: (e, cell) => {
-                            if (e.target.closest('.btn-outline-primary')) self.openEdit(cell.getData());
-                            if (e.target.closest('.btn-outline-danger')) self.deleteItem(cell.getData().id);
-                        }
-                    }
-                ]
+                columns: columns
             });
+        },
+
+        toggleColumn(field) {
+            const col = this.table.getColumn(field);
+            if (col) { if (col.isVisible()) col.hide(); else col.show(); }
+            this.columnDefs = this.columnDefs.map(c => c.field === field ? { ...c, visible: !c.visible } : c);
         },
 
         async addItem() {
@@ -43,10 +56,7 @@ function addrTypeListPage() {
             } catch { }
         },
 
-        openEdit(data) {
-            this.editItem = { ...data };
-            this.editModal.show();
-        },
+        openEdit(data) { this.editItem = { ...data }; this.editModal.show(); },
 
         async saveEdit() {
             if (!this.editItem) return;

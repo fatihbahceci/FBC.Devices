@@ -191,42 +191,5 @@ public class AppDbContext : DbContext
 
     #endregion
 
-    #region Backup
-
-    public string SaveChangesAndBackup()
-    {
-        SaveChanges();
-        ExecuteCheckpointAndClose();
-        return CreateBackup();
-    }
-
-    private void ExecuteCheckpointAndClose()
-    {
-        using var connection = Database.GetDbConnection();
-        connection.Open();
-        using var command = connection.CreateCommand();
-        command.CommandText = "PRAGMA journal_mode = DELETE;";
-        command.ExecuteNonQuery();
-        command.CommandText = "PRAGMA wal_checkpoint(FULL);";
-        command.ExecuteNonQuery();
-        command.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
-        command.ExecuteNonQuery();
-        command.CommandText = "VACUUM;";
-        command.ExecuteNonQuery();
-        connection.Close();
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-    }
-
-    private string CreateBackup()
-    {
-        var backupDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DatabaseBackups");
-        if (!Directory.Exists(backupDir))
-            Directory.CreateDirectory(backupDir);
-        var backupPath = Path.Combine(backupDir, $"FBC.Devices_backup_{DateTime.Now:yyyyMMddHHmmss}.db");
-        File.Copy(DbPath, backupPath, true);
-        return backupPath;
-    }
-
-    #endregion
+    // Backup functionality moved to Features/Backup/ using SQLite Online Backup API
 }

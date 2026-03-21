@@ -70,6 +70,11 @@
                    x-show="$store.app.hasRole('SysAdmin')">
                     <i class="bi bi-people"></i> Users
                 </a>
+                <hr class="border-secondary my-2" x-show="$store.app.hasRole('SysAdmin')">
+                <a class="nav-link" :class="{ active: $store.app.page === 'backups' }" href="#backups"
+                   x-show="$store.app.hasRole('SysAdmin')">
+                    <i class="bi bi-database-down"></i> Backups
+                </a>
             </nav>
         </div>
     </template>
@@ -143,17 +148,17 @@
                                 </a>
                             </div>
                             <div class="card-body">
-                                <div class="mb-2" x-show="device.deviceType">
+                                <div class="mb-2">
                                     <small class="text-muted">Type:</small>
-                                    <span x-text="device.deviceType?.name"></span>
+                                    <span x-text="device.deviceType?.name || '-'"></span>
                                 </div>
-                                <div class="mb-2" x-show="device.deviceGroup">
+                                <div class="mb-2">
                                     <small class="text-muted">Group:</small>
-                                    <span x-text="device.deviceGroup?.name"></span>
+                                    <span x-text="device.deviceGroup?.name || '-'"></span>
                                 </div>
-                                <div class="mb-2" x-show="device.description">
+                                <div class="mb-2">
                                     <small class="text-muted">Description:</small>
-                                    <span x-text="device.description"></span>
+                                    <span x-text="device.description || '-'"></span>
                                 </div>
 
                                 <!-- Details accordion -->
@@ -229,15 +234,18 @@
             </div>
 
             <!-- Pagination -->
-            <div class="d-flex justify-content-center mt-3" x-show="totalPages > 1">
-                <nav>
-                    <ul class="pagination">
+            <div class="d-flex justify-content-between align-items-center mt-3" x-show="totalCount > 0">
+                <small class="text-muted" x-text="pagingSummary"></small>
+                <nav x-show="totalPages > 1">
+                    <ul class="pagination pagination-sm mb-0">
                         <li class="page-item" :class="{ disabled: currentPage <= 1 }">
                             <a class="page-link" href="#" @click.prevent="prevPage()">Previous</a>
                         </li>
-                        <li class="page-item disabled">
-                            <span class="page-link" x-text="`${currentPage} / ${totalPages}`"></span>
-                        </li>
+                        <template x-for="p in pageNumbers" :key="p">
+                            <li class="page-item" :class="{ active: p === currentPage }">
+                                <a class="page-link" href="#" @click.prevent="goToPage(p)" x-text="p"></a>
+                            </li>
+                        </template>
                         <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
                             <a class="page-link" href="#" @click.prevent="nextPage()">Next</a>
                         </li>
@@ -250,7 +258,24 @@
         <!-- ===== DEVICE LIST PAGE ===== -->
         <template x-if="$store.app.page === 'devices'">
         <div x-data="deviceListPage()" x-init="init()">
-            <h4 class="mb-3"><i class="bi bi-hdd-network me-2"></i>Devices</h4>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"><i class="bi bi-hdd-network me-2"></i>Devices</h4>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <i class="bi bi-layout-three-columns me-1"></i>Columns
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <template x-for="col in columnDefs" :key="col.field">
+                            <li>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" class="form-check-input me-2" :checked="col.visible" @change="toggleColumn(col.field)">
+                                    <span x-text="col.title"></span>
+                                </label>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
             <!-- Inline add -->
             <div class="row g-2 mb-3 align-items-end">
                 <div class="col-md-4">
@@ -403,7 +428,19 @@
         <!-- ===== ADDRESS TYPE LIST ===== -->
         <template x-if="$store.app.page === 'addr-types'">
         <div x-data="addrTypeListPage()" x-init="init()">
-            <h4 class="mb-3"><i class="bi bi-plug me-2"></i>Address Types</h4>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"><i class="bi bi-plug me-2"></i>Address Types</h4>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <i class="bi bi-layout-three-columns me-1"></i>Columns
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <template x-for="col in columnDefs" :key="col.field">
+                            <li><label class="dropdown-item"><input type="checkbox" class="form-check-input me-2" :checked="col.visible" @change="toggleColumn(col.field)"><span x-text="col.title"></span></label></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
             <div class="row g-2 mb-3 align-items-end">
                 <div class="col-md-4">
                     <input type="text" class="form-control" placeholder="Name" x-model="newItem.name" @keyup.enter="addItem()">
@@ -440,7 +477,19 @@
         <!-- ===== DEVICE TYPE LIST ===== -->
         <template x-if="$store.app.page === 'device-types'">
         <div x-data="deviceTypeListPage()" x-init="init()">
-            <h4 class="mb-3"><i class="bi bi-tags me-2"></i>Device Types</h4>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"><i class="bi bi-tags me-2"></i>Device Types</h4>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <i class="bi bi-layout-three-columns me-1"></i>Columns
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <template x-for="col in columnDefs" :key="col.field">
+                            <li><label class="dropdown-item"><input type="checkbox" class="form-check-input me-2" :checked="col.visible" @change="toggleColumn(col.field)"><span x-text="col.title"></span></label></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
             <div class="row g-2 mb-3 align-items-end">
                 <div class="col-md-3">
                     <input type="text" class="form-control" placeholder="Name" x-model="newItem.name" @keyup.enter="addItem()">
@@ -483,7 +532,19 @@
         <!-- ===== DEVICE GROUP LIST ===== -->
         <template x-if="$store.app.page === 'device-groups'">
         <div x-data="deviceGroupListPage()" x-init="init()">
-            <h4 class="mb-3"><i class="bi bi-collection me-2"></i>Device Groups</h4>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"><i class="bi bi-collection me-2"></i>Device Groups</h4>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <i class="bi bi-layout-three-columns me-1"></i>Columns
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <template x-for="col in columnDefs" :key="col.field">
+                            <li><label class="dropdown-item"><input type="checkbox" class="form-check-input me-2" :checked="col.visible" @change="toggleColumn(col.field)"><span x-text="col.title"></span></label></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
             <div class="row g-2 mb-3 align-items-end">
                 <div class="col-md-3">
                     <input type="text" class="form-control" placeholder="Name" x-model="newItem.name" @keyup.enter="addItem()">
@@ -597,8 +658,75 @@
         </div>
         </template>
 
+        <!-- ===== BACKUP PAGE ===== -->
+        <template x-if="$store.app.page === 'backups'">
+        <div x-data="backupPage()" x-init="init()">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"><i class="bi bi-database-down me-2"></i>Database Backups</h4>
+                <button class="btn btn-primary" @click="createBackup()" :disabled="creating">
+                    <span x-show="creating" class="spinner-border spinner-border-sm me-1"></span>
+                    <i class="bi bi-plus-lg me-1" x-show="!creating"></i>Create Backup
+                </button>
+            </div>
+
+            <div x-show="loading" class="text-center py-5"><div class="spinner-border"></div></div>
+
+            <div x-show="!loading">
+                <div class="d-flex justify-content-between align-items-center mb-2" x-show="backups.length > 0">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAllBackups"
+                               :checked="allSelected" @change="toggleSelectAll()">
+                        <label class="form-check-label" for="selectAllBackups">
+                            Select All (<span x-text="selectedBackups.length"></span> selected)
+                        </label>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" @click="deleteSelected()"
+                            x-show="selectedBackups.length > 0">
+                        <i class="bi bi-trash me-1"></i>Delete Selected (<span x-text="selectedBackups.length"></span>)
+                    </button>
+                </div>
+
+                <div class="list-group">
+                    <template x-for="backup in backups" :key="backup.fileName">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-3">
+                                <input class="form-check-input" type="checkbox"
+                                       :checked="selectedBackups.includes(backup.fileName)"
+                                       @change="toggleSelect(backup.fileName)">
+                                <div>
+                                    <div class="fw-semibold" x-text="backup.fileName"></div>
+                                    <small class="text-muted">
+                                        <span x-text="formatSize(backup.sizeBytes)"></span> &mdash;
+                                        <span x-text="formatDate(backup.createdAt)"></span>
+                                    </small>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" @click="downloadBackup(backup.fileName)">
+                                <i class="bi bi-download me-1"></i>Download
+                            </button>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="text-center text-muted py-4" x-show="backups.length === 0">
+                    No backups yet. Click "Create Backup" to create your first backup.
+                </div>
+            </div>
+        </div>
+        </template>
+
     </div>
 </div>
+
+<!-- Footer -->
+<footer class="border-top py-2 text-center" x-data>
+    <small class="text-muted">
+        FBC.Devices &mdash;
+        <a href="https://github.com/fatihbahceci/FBC.Devices" target="_blank" class="text-decoration-none">
+            <i class="bi bi-github me-1"></i>GitHub
+        </a>
+    </small>
+</footer>
 
 <!-- Toast container -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-container"></div>
@@ -617,6 +745,7 @@
 <script src="/js/pages/device-group-list.js"></script>
 <script src="/js/pages/user-list.js"></script>
 <script src="/js/pages/edit-user.js"></script>
+<script src="/js/pages/backup.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
 </body>
 </html>

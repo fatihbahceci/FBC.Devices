@@ -19,7 +19,10 @@ function homePage() {
         async loadCriteria() {
             try {
                 this.criteria = await apiFetch('/api/search/criteria') || [];
-                this.selectedFields = this.criteria.map(c => c.index);
+                // Default: select key fields (Name, Description, SerialNumber, Note, Addr)
+                this.selectedFields = this.criteria
+                    .filter(c => ['Name', 'Description', 'SerialNumber', 'Note', 'Addr'].includes(c.fieldName))
+                    .map(c => c.index);
             } catch { }
         },
 
@@ -89,6 +92,22 @@ function homePage() {
 
         get currentPage() {
             return Math.floor(this.skip / this.take) + 1;
+        },
+
+        get pageNumbers() {
+            const pages = [];
+            const total = this.totalPages;
+            const current = this.currentPage;
+            let start = Math.max(1, current - 2);
+            let end = Math.min(total, start + 4);
+            start = Math.max(1, end - 4);
+            for (let i = start; i <= end; i++) pages.push(i);
+            return pages;
+        },
+
+        get pagingSummary() {
+            if (this.totalCount === 0) return 'No records found';
+            return `Displaying page ${this.currentPage} of ${this.totalPages} (total ${this.totalCount} records)`;
         },
 
         async goToPage(page) {

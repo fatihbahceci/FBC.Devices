@@ -13,6 +13,7 @@ function userListPage() {
                 layout: 'fitColumns',
                 pagination: true,
                 paginationSize: 25,
+                paginationSizeSelector: [10, 25, 50, 100],
                 ajaxURL: '/api/users',
                 ajaxConfig: { headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` } },
                 ajaxResponse: function (url, params, response) {
@@ -42,7 +43,7 @@ function userListPage() {
         async addUser() {
             if (!this.newUser.userName || !this.newUser.password || !this.newUser.name) return;
             try {
-                await apiFetch('/api/users', {
+                const result = await apiFetch('/api/users', {
                     method: 'POST',
                     body: JSON.stringify({
                         userName: this.newUser.userName,
@@ -54,7 +55,10 @@ function userListPage() {
                 });
                 showToast(i18n.t('toast.saved'));
                 this.newUser = { userName: '', password: '', name: '' };
-                this.table.replaceData();
+                // Redirect to edit page to assign roles
+                if (result) {
+                    window.location.hash = `#edit-user/${result}`;
+                }
             } catch { }
         },
 
