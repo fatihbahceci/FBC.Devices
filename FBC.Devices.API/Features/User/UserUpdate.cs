@@ -17,9 +17,6 @@ public sealed class UserUpdate
             var user = await repo.GetByIdAsync(request.Id)
                 ?? throw new KeyNotFoundException($"User {request.Id} not found");
 
-            if (user.IsSysAdmin && !request.IsSysAdmin && await repo.CountAsync(x => x.IsSysAdmin) <= 1)
-                throw new InvalidOperationException("Cannot remove SysAdmin rights from the last SysAdmin user.");
-
             user.UserName = request.UserName;
             user.Name = request.Name;
             user.IsSysAdmin = request.IsSysAdmin;
