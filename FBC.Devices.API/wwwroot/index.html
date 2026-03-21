@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FBC.Devices</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+    <link href="/css/app.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar navbar-expand-lg bg-dark navbar-dark border-bottom" x-data>
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="#home">
+            <i class="bi bi-hdd-network me-2"></i>FBC.Devices
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <template x-if="$store.app.isAuthenticated">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-light btn-sm d-lg-none" @click="$store.app.toggleSidebar()">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <span class="text-light small" x-text="$store.app.user?.name"></span>
+                    <button class="btn btn-outline-light btn-sm" @click="$store.app.logout()">
+                        <i class="bi bi-box-arrow-right me-1"></i>Logout
+                    </button>
+                </div>
+            </template>
+            <template x-if="!$store.app.isAuthenticated">
+                <a class="btn btn-outline-light btn-sm" href="#login">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                </a>
+            </template>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== MAIN LAYOUT ===== -->
+<div class="d-flex" x-data>
+
+    <!-- Sidebar -->
+    <template x-if="$store.app.isAuthenticated">
+        <div class="sidebar bg-dark p-2" :class="{ collapsed: !$store.app.sidebarOpen }">
+            <nav class="nav flex-column mt-2">
+                <a class="nav-link" :class="{ active: $store.app.page === 'home' }" href="#home">
+                    <i class="bi bi-house"></i> Home
+                </a>
+                <hr class="border-secondary my-2">
+                <small class="text-secondary px-3 text-uppercase">Manage</small>
+                <a class="nav-link" :class="{ active: $store.app.page === 'addr-types' }" href="#addr-types"
+                   x-show="$store.app.hasRole('Edit.DeviceAddrTypes')">
+                    <i class="bi bi-plug"></i> Address Types
+                </a>
+                <a class="nav-link" :class="{ active: $store.app.page === 'device-types' }" href="#device-types"
+                   x-show="$store.app.hasRole('Edit.DeviceTypes')">
+                    <i class="bi bi-tags"></i> Device Types
+                </a>
+                <a class="nav-link" :class="{ active: $store.app.page === 'device-groups' }" href="#device-groups"
+                   x-show="$store.app.hasRole('Edit.DeviceGroups')">
+                    <i class="bi bi-collection"></i> Device Groups
+                </a>
+                <a class="nav-link" :class="{ active: $store.app.page === 'devices' }" href="#devices"
+                   x-show="$store.app.hasRole('Edit.Devices')">
+                    <i class="bi bi-hdd-network"></i> Devices
+                </a>
+                <a class="nav-link" :class="{ active: $store.app.page === 'users' || $store.app.page === 'edit-user' }" href="#users"
+                   x-show="$store.app.hasRole('SysAdmin')">
+                    <i class="bi bi-people"></i> Users
+                </a>
+            </nav>
+        </div>
+    </template>
+
+    <!-- Content -->
+    <div class="main-content p-4">
+
+        <!-- ===== LOGIN PAGE ===== -->
+        <template x-if="$store.app.page === 'login'">
+        <div x-data="loginPage()">
+            <div class="row justify-content-center mt-5">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title text-center mb-4"><i class="bi bi-shield-lock me-2"></i>Sign In</h4>
+                            <div x-show="error" class="alert alert-danger" x-text="error"></div>
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" x-model="username" @keyup.enter="submit()">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" x-model="password" @keyup.enter="submit()">
+                            </div>
+                            <button class="btn btn-primary w-100" @click="submit()" :disabled="loading">
+                                <span x-show="loading" class="spinner-border spinner-border-sm me-1"></span>
+                                Sign In
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </template>
+
+        <!-- ===== HOME PAGE ===== -->
+        <template x-if="$store.app.page === 'home'">
+        <div x-data="homePage()" x-init="init()">
+            <!-- Search bar -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Search devices..." x-model="searchFilter" @keyup.enter="skip=0; search()">
+                        <button class="btn btn-primary" @click="skip=0; search()">Search</button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <select class="form-select" multiple size="1" x-model="selectedFields" @change="skip=0; search()">
+                        <template x-for="c in criteria" :key="c.index">
+                            <option :value="c.index" x-text="`${c.table} > ${c.fieldName}`"></option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+
+            <div x-show="loading" class="text-center py-5"><div class="spinner-border"></div></div>
+
+            <!-- Device cards -->
+            <div class="row g-3" x-show="!loading">
+                <template x-for="device in devices" :key="device.id">
+                    <div class="col-auto">
+                        <div class="card device-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    <span class="badge bg-secondary me-1" x-text="'#' + device.id"></span>
+                                    <span x-text="device.name"></span>
+                                </h6>
+                                <a :href="'#edit-device/' + device.id" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2" x-show="device.deviceType">
+                                    <small class="text-muted">Type:</small>
+                                    <span x-text="device.deviceType?.name"></span>
+                                </div>
+                                <div class="mb-2" x-show="device.deviceGroup">
+                                    <small class="text-muted">Group:</small>
+                                    <span x-text="device.deviceGroup?.name"></span>
+                                </div>
+                                <div class="mb-2" x-show="device.description">
+                                    <small class="text-muted">Description:</small>
+                                    <span x-text="device.description"></span>
+                                </div>
+
+                                <!-- Details accordion -->
+                                <div class="accordion accordion-flush" :id="'acc-' + device.id">
+                                    <div class="accordion-item" x-show="device.deviceModel || device.serialNumber || device.location">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed py-2" type="button"
+                                                    data-bs-toggle="collapse" :data-bs-target="'#details-' + device.id">
+                                                Details
+                                            </button>
+                                        </h2>
+                                        <div :id="'details-' + device.id" class="accordion-collapse collapse">
+                                            <div class="accordion-body py-2">
+                                                <div x-show="device.deviceModel"><small class="text-muted">Model:</small> <span x-text="device.deviceModel"></span></div>
+                                                <div x-show="device.serialNumber"><small class="text-muted">S/N:</small> <span x-text="device.serialNumber"></span></div>
+                                                <div x-show="device.location"><small class="text-muted">Location:</small> <span x-text="device.location"></span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-item" x-show="device.note">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed py-2" type="button"
+                                                    data-bs-toggle="collapse" :data-bs-target="'#note-' + device.id">
+                                                Notes
+                                            </button>
+                                        </h2>
+                                        <div :id="'note-' + device.id" class="accordion-collapse collapse">
+                                            <div class="accordion-body py-2" x-text="device.note"></div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-item" x-show="device.deviceAddresses?.length">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed py-2" type="button"
+                                                    data-bs-toggle="collapse" :data-bs-target="'#addrs-' + device.id">
+                                                Addresses (<span x-text="device.deviceAddresses?.length || 0"></span>)
+                                            </button>
+                                        </h2>
+                                        <div :id="'addrs-' + device.id" class="accordion-collapse collapse">
+                                            <div class="accordion-body py-2">
+                                                <template x-for="addr in device.deviceAddresses" :key="addr.id">
+                                                    <div class="border rounded p-2 mb-2">
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <span class="badge" :class="getStatusBadgeClass(addr.id, addr.periodicPingCheck)"
+                                                                  x-text="getStatusText(addr.id, addr.periodicPingCheck)"></span>
+                                                            <button class="btn btn-sm btn-outline-info" @click="ping(addr.addr)"
+                                                                    title="Ping">
+                                                                <i class="bi bi-wifi"></i>
+                                                            </button>
+                                                        </div>
+                                                        <div><small class="text-muted" x-text="addr.addrType?.name + ':'"></small> <span x-text="addr.addr"></span></div>
+                                                        <div x-show="addr.username"><small class="text-muted">User:</small> <span x-text="addr.username"></span></div>
+                                                        <div x-show="addr.password">
+                                                            <small class="text-muted">Pass:</small>
+                                                            <span class="text-muted">******</span>
+                                                            <button class="btn btn-sm btn-outline-secondary ms-1" @click="copyToClipboard(addr.password)" title="Copy password">
+                                                                <i class="bi bi-clipboard"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer text-end">
+                                <span class="badge" :class="device.isActive ? 'bg-success' : 'bg-secondary'"
+                                      x-text="device.isActive ? 'Active' : 'Inactive'"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-3" x-show="totalPages > 1">
+                <nav>
+                    <ul class="pagination">
+                        <li class="page-item" :class="{ disabled: currentPage <= 1 }">
+                            <a class="page-link" href="#" @click.prevent="prevPage()">Previous</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link" x-text="`${currentPage} / ${totalPages}`"></span>
+                        </li>
+                        <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
+                            <a class="page-link" href="#" @click.prevent="nextPage()">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        </template>
+
+        <!-- ===== DEVICE LIST PAGE ===== -->
+        <template x-if="$store.app.page === 'devices'">
+        <div x-data="deviceListPage()" x-init="init()">
+            <h4 class="mb-3"><i class="bi bi-hdd-network me-2"></i>Devices</h4>
+            <!-- Inline add -->
+            <div class="row g-2 mb-3 align-items-end">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" placeholder="Device name" x-model="newDevice.name" @keyup.enter="addDevice()">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" x-model="newDevice.deviceGroupId">
+                        <option value="">-- Group --</option>
+                        <template x-for="g in groups" :key="g.id">
+                            <option :value="g.id" x-text="g.name"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" x-model="newDevice.deviceTypeId">
+                        <option value="">-- Type --</option>
+                        <template x-for="t in types" :key="t.id">
+                            <option :value="t.id" x-text="t.name"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" @click="addDevice()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+                </div>
+            </div>
+            <div id="device-table"></div>
+        </div>
+        </template>
+
+        <!-- ===== EDIT DEVICE PAGE ===== -->
+        <template x-if="$store.app.page === 'edit-device'">
+        <div x-data="editDevicePage()" x-init="init()">
+            <div x-show="loading" class="text-center py-5"><div class="spinner-border"></div></div>
+            <div x-show="!loading && device">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><i class="bi bi-pencil-square me-2"></i>Edit Device</h4>
+                    <button class="btn btn-outline-secondary" @click="goBack()"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" x-model="device.name">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" x-model="device.description">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Device Group</label>
+                        <select class="form-select" x-model="device.deviceGroupId">
+                            <option value="">-- None --</option>
+                            <template x-for="g in groups" :key="g.id">
+                                <option :value="g.id" x-text="g.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Device Type</label>
+                        <select class="form-select" x-model="device.deviceTypeId">
+                            <option value="">-- None --</option>
+                            <template x-for="t in types" :key="t.id">
+                                <option :value="t.id" x-text="t.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Model</label>
+                        <input type="text" class="form-control" x-model="device.deviceModel">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Serial Number</label>
+                        <input type="text" class="form-control" x-model="device.serialNumber">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Location</label>
+                        <input type="text" class="form-control" x-model="device.location">
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" x-model="device.isActive" id="isActiveCheck">
+                            <label class="form-check-label" for="isActiveCheck">Active</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Note</label>
+                        <textarea class="form-control" rows="2" x-model="device.note"></textarea>
+                    </div>
+                </div>
+
+                <!-- Addresses -->
+                <hr>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5>Addresses</h5>
+                    <button class="btn btn-sm btn-outline-primary" @click="addAddress()"><i class="bi bi-plus-lg me-1"></i>Add Address</button>
+                </div>
+                <template x-for="(addr, idx) in device.deviceAddresses" :key="idx">
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label">Type</label>
+                                    <select class="form-select" x-model.number="addr.addrTypeId">
+                                        <template x-for="at in addrTypes" :key="at.id">
+                                            <option :value="at.id" x-text="at.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Address</label>
+                                    <input type="text" class="form-control" x-model="addr.addr">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" x-model="addr.username">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Password</label>
+                                    <input :type="addr._showPassword ? 'text' : 'password'" class="form-control" x-model="addr.password">
+                                </div>
+                                <div class="col-md-1">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" x-model="addr.periodicPingCheck">
+                                        <label class="form-check-label">Ping</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <button class="btn btn-sm btn-outline-secondary me-1" @click="addr._showPassword = !addr._showPassword">
+                                        <i class="bi" :class="addr._showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @click="removeAddress(idx)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="mt-3">
+                    <button class="btn btn-primary" @click="save()" :disabled="saving">
+                        <span x-show="saving" class="spinner-border spinner-border-sm me-1"></span>
+                        Save
+                    </button>
+                    <button class="btn btn-secondary ms-2" @click="goBack()">Close</button>
+                </div>
+            </div>
+        </div>
+        </template>
+
+        <!-- ===== ADDRESS TYPE LIST ===== -->
+        <template x-if="$store.app.page === 'addr-types'">
+        <div x-data="addrTypeListPage()" x-init="init()">
+            <h4 class="mb-3"><i class="bi bi-plug me-2"></i>Address Types</h4>
+            <div class="row g-2 mb-3 align-items-end">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" placeholder="Name" x-model="newItem.name" @keyup.enter="addItem()">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" @click="addItem()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+                </div>
+            </div>
+            <div id="addr-type-table"></div>
+            <!-- Edit Modal -->
+            <div class="modal fade" id="addrTypeEditModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content" x-show="editItem">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Address Type</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" x-model="editItem.name">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button class="btn btn-primary" @click="saveEdit()">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </template>
+
+        <!-- ===== DEVICE TYPE LIST ===== -->
+        <template x-if="$store.app.page === 'device-types'">
+        <div x-data="deviceTypeListPage()" x-init="init()">
+            <h4 class="mb-3"><i class="bi bi-tags me-2"></i>Device Types</h4>
+            <div class="row g-2 mb-3 align-items-end">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Name" x-model="newItem.name" @keyup.enter="addItem()">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Description" x-model="newItem.description">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" @click="addItem()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+                </div>
+            </div>
+            <div id="device-type-table"></div>
+            <div class="modal fade" id="deviceTypeEditModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content" x-show="editItem">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Device Type</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" x-model="editItem.name">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <input type="text" class="form-control" x-model="editItem.description">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button class="btn btn-primary" @click="saveEdit()">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </template>
+
+        <!-- ===== DEVICE GROUP LIST ===== -->
+        <template x-if="$store.app.page === 'device-groups'">
+        <div x-data="deviceGroupListPage()" x-init="init()">
+            <h4 class="mb-3"><i class="bi bi-collection me-2"></i>Device Groups</h4>
+            <div class="row g-2 mb-3 align-items-end">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Name" x-model="newItem.name" @keyup.enter="addItem()">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Description" x-model="newItem.description">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" @click="addItem()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+                </div>
+            </div>
+            <div id="device-group-table"></div>
+            <div class="modal fade" id="deviceGroupEditModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content" x-show="editItem">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Device Group</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" x-model="editItem.name">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <input type="text" class="form-control" x-model="editItem.description">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button class="btn btn-primary" @click="saveEdit()">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </template>
+
+        <!-- ===== USER LIST ===== -->
+        <template x-if="$store.app.page === 'users'">
+        <div x-data="userListPage()" x-init="init()">
+            <h4 class="mb-3"><i class="bi bi-people me-2"></i>Users</h4>
+            <div class="row g-2 mb-3 align-items-end">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Username" x-model="newUser.userName">
+                </div>
+                <div class="col-md-3">
+                    <input type="password" class="form-control" placeholder="Password" x-model="newUser.password">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Full Name" x-model="newUser.name">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" @click="addUser()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+                </div>
+            </div>
+            <div id="user-table"></div>
+        </div>
+        </template>
+
+        <!-- ===== EDIT USER PAGE ===== -->
+        <template x-if="$store.app.page === 'edit-user'">
+        <div x-data="editUserPage()" x-init="init()">
+            <div x-show="loading" class="text-center py-5"><div class="spinner-border"></div></div>
+            <div x-show="!loading && user">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><i class="bi bi-person-gear me-2"></i>Edit User</h4>
+                    <button class="btn btn-outline-secondary" @click="goBack()"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" x-model="user.userName">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-control" x-model="user.newPassword" placeholder="Leave blank to keep current">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" x-model="user.name">
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" x-model="user.isSysAdmin" id="isSysAdminCheck">
+                            <label class="form-check-label" for="isSysAdminCheck">System Administrator</label>
+                        </div>
+                    </div>
+                    <div class="col-12" x-show="!user.isSysAdmin">
+                        <label class="form-label">Roles</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <template x-for="role in allRoles" :key="role">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" :id="'role-' + role"
+                                           :checked="selectedRoles.includes(role)" @change="toggleRole(role)">
+                                    <label class="form-check-label" :for="'role-' + role" x-text="role"></label>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-primary" @click="save()" :disabled="saving">
+                        <span x-show="saving" class="spinner-border spinner-border-sm me-1"></span>
+                        Save
+                    </button>
+                    <button class="btn btn-secondary ms-2" @click="goBack()">Close</button>
+                </div>
+            </div>
+        </div>
+        </template>
+
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/app.js"></script>
+<script src="/js/pages/login.js"></script>
+<script src="/js/pages/home.js"></script>
+<script src="/js/pages/device-list.js"></script>
+<script src="/js/pages/edit-device.js"></script>
+<script src="/js/pages/addr-type-list.js"></script>
+<script src="/js/pages/device-type-list.js"></script>
+<script src="/js/pages/device-group-list.js"></script>
+<script src="/js/pages/user-list.js"></script>
+<script src="/js/pages/edit-user.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+</body>
+</html>

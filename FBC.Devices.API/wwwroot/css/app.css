@@ -1,0 +1,70 @@
+/* Sidebar */
+.sidebar {
+    min-height: calc(100vh - 56px);
+    width: 250px;
+    transition: width 0.3s;
+}
+.sidebar.collapsed {
+    width: 0;
+    overflow: hidden;
+}
+.sidebar .nav-link {
+    color: #dee2e6;
+    padding: 0.5rem 1rem;
+}
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background-color: rgba(255,255,255,0.1);
+    color: #fff;
+}
+.sidebar .nav-link i {
+    width: 20px;
+    text-align: center;
+    margin-right: 8px;
+}
+
+/* Content area */
+.main-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Device cards (home page) */
+.device-card {
+    min-width: 400px;
+    max-width: 500px;
+}
+
+/* Status badges */
+.badge-ping-success {
+    background-color: #198754;
+}
+.badge-ping-fail {
+    background-color: #dc3545;
+}
+.badge-ping-default {
+    background-color: #6c757d;
+}
+
+/* Password toggle */
+.password-field {
+    position: relative;
+}
+.password-field .toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 5;
+}
+
+/* Toast container */
+.toast-container {
+    z-index: 9999;
+}
+
+/* Tabulator overrides */
+.tabulator .tabulator-header .tabulator-col {
+    border-right: 1px solid #dee2e6;
+}
