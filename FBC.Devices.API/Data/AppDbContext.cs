@@ -38,6 +38,21 @@ public class AppDbContext : DbContext
         try
         {
             Console.WriteLine("Begin Migrate");
+
+            // If this is a DB copied from the old Blazor project,
+            // mark our InitialCreate migration as applied since schema is identical
+            if (db.Database.CanConnect())
+            {
+                var applied = db.Database.GetAppliedMigrations().ToList();
+                var pending = db.Database.GetPendingMigrations().ToList();
+                if (applied.Any() && pending.Contains("20260321154003_InitialCreate"))
+                {
+                    Console.WriteLine("Legacy DB detected — marking InitialCreate as applied");
+                    db.Database.ExecuteSqlRaw(
+                        "INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") VALUES ('20260321154003_InitialCreate', '9.0.9')");
+                }
+            }
+
             db.Database.Migrate();
             Console.WriteLine("End Migrate");
 
