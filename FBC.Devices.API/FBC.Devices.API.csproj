@@ -1,35 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.0.0</Version>
-    <Authors>Fatih Bahceci</Authors>
-    <WebPage>https://github.com/fatihbahceci</WebPage>
-    <Copyright>Fatih Bahceci (c) 2025 - MIT License</Copyright>
-    <PackageProjectUrl>https://github.com/fatihbahceci/FBC.Devices</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/fatihbahceci/FBC.Devices</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Version>1.0.0</Version>
+		<Authors>Fatih Bahceci</Authors>
+		<WebPage>https://github.com/fatihbahceci</WebPage>
+		<Copyright>Fatih Bahceci (c) 2025 - MIT License</Copyright>
+		<PackageProjectUrl>https://github.com/fatihbahceci/FBC.Devices</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/fatihbahceci/FBC.Devices</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="FBC.Mediator" Version="*" />
-     <PackageReference Include="FBC.DBRepository" Version="0.3.0" /> 
-    <!--<ProjectReference Include="..\..\FBC.DBRepository\FBC.DBRepository.csproj" />-->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.*" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="FBC.Mediator" Version="0.1.0" />
+		<!--<ProjectReference Include="..\..\FBC.Mediator\FBC.Mediator.csproj" />-->
+		<PackageReference Include="FBC.DBRepository" Version="0.3.0" />
+		<!--<ProjectReference Include="..\..\FBC.DBRepository\FBC.DBRepository.csproj" />-->
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.*" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Content Update="wwwroot\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Update="wwwroot\**">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
 </Project>
