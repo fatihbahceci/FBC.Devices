@@ -14,7 +14,7 @@ public sealed class AddrTypeCreate
         public async Task<int> Handle(Command request, CancellationToken token = default)
         {
             var entity = new Models.AddrType { Name = request.Name };
-            await repo.ApplyOperation(EntityOperation.Create, entity, alsoValidate: false);
+            await repo.ApplyOperation(EntityOperation.Create, entity, alsoValidate: true);
             return entity.Id;
         }
     }

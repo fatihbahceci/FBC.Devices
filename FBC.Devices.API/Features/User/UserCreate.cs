@@ -1,4 +1,4 @@
-using FBC.Devices.API.Data;
+using FBC.DBRepository;
 using FBC.Devices.API.Data.Repositories;
 using FBC.Devices.API.Models;
 using FBC.Mediator;
@@ -9,14 +9,11 @@ public sealed class UserCreate
 {
     public record Command(string UserName, string Password, string Name, bool IsSysAdmin, string[] Roles) : IRequest<int>;
 
-    internal sealed class Handler(UserRepository db)
+    internal sealed class Handler(UserRepository repo)
         : IRequestHandler<Command, int>
     {
         public async Task<int> Handle(Command request, CancellationToken token = default)
         {
-            if (await db.AnyAsync(x => x.UserName == request.UserName))
-                throw new ArgumentException($"User with username '{request.UserName}' already exists.");
-
             var user = new AppUser
             {
                 UserName = request.UserName,
@@ -25,7 +22,7 @@ public sealed class UserCreate
                 IsSysAdmin = request.IsSysAdmin
             };
             user.SetRoles(request.Roles);
-            await db.ApplyOperation(DBRepository.EntityOperation.Create, user,true);
+            await repo.ApplyOperation(EntityOperation.Create, user, alsoValidate: true);
             return user.Id;
         }
     }

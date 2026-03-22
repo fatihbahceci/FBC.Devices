@@ -76,6 +76,16 @@ public class AppUser : APIBaseEntity<AppUser>
                             }
                         }
                         break;
+                    case EntityOperation.Delete:
+                        if (IsSysAdmin)
+                        {
+                            var remainingSysAdmins = await query.CountAsync(u => u.IsSysAdmin);
+                            if (remainingSysAdmins <= 1)
+                            {
+                                throw new InvalidOperationException("Cannot delete the last SysAdmin user");
+                            }
+                        }
+                        break;
                 }
             }
         }

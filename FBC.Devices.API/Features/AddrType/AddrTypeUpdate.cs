@@ -16,7 +16,7 @@ public sealed class AddrTypeUpdate
             var entity = await repo.GetByIdAsync(request.Id, cancellationToken: token)
                 ?? throw new KeyNotFoundException($"AddrType {request.Id} not found");
             entity.Name = request.Name;
-            await repo.ApplyOperation(EntityOperation.Update, entity, alsoValidate: false);
+            await repo.ApplyOperation(EntityOperation.Update, entity, alsoValidate: true);
         }
     }
 }

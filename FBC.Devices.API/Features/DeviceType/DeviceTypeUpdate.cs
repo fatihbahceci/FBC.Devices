@@ -17,7 +17,7 @@ public sealed class DeviceTypeUpdate
                 ?? throw new KeyNotFoundException($"DeviceType {request.Id} not found");
             entity.Name = request.Name;
             entity.Description = request.Description;
-            await repo.ApplyOperation(EntityOperation.Update, entity, alsoValidate: false);
+            await repo.ApplyOperation(EntityOperation.Update, entity, alsoValidate: true);
         }
     }
 }

@@ -14,7 +14,7 @@ public sealed class DeviceTypeCreate
         public async Task<int> Handle(Command request, CancellationToken token = default)
         {
             var entity = new Models.DeviceType { Name = request.Name, Description = request.Description };
-            await repo.ApplyOperation(EntityOperation.Create, entity, alsoValidate: false);
+            await repo.ApplyOperation(EntityOperation.Create, entity, alsoValidate: true);
             return entity.Id;
         }
     }
