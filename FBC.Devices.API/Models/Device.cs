@@ -4,8 +4,10 @@ using FBC.DBRepository;
 
 namespace FBC.Devices.API.Models;
 
-public class Device : APIBaseEntity<Device>, IEntityHasSoftDeleteFeature
+public class Device : APIBaseEntity<Device>, IEntityHasSoftDeleteFeature, IEntityRequiresRole
 {
+    public string[] GetRequiredRolesFor(EntityOperation operation) => [Constants.UserRoles.EditDevices];
+
     public string Name { get; set; } = "New Device";
     public string? Description { get; set; }
 

@@ -4,8 +4,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FBC.Devices.API.Models;
 
-public class AddrType : APIBaseEntity<AddrType>
+public class AddrType : APIBaseEntity<AddrType>, IEntityRequiresRole
 {
+    public string[] GetRequiredRolesFor(EntityOperation operation) => [Constants.UserRoles.EditDeviceAddrTypes];
+
     public string Name { get; set; } = "New Address Type";
 
     public override async Task CheckDataForAsync(EntityOperation operation, bool alsoValidate, IQueryable<AddrType> query)

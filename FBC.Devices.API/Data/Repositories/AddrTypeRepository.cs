@@ -5,5 +5,6 @@ namespace FBC.Devices.API.Data.Repositories;
 
 public class AddrTypeRepository : EFRepositoryBase<AddrType, int, AppDbContext>
 {
-    public AddrTypeRepository(AppDbContext context) : base(context) { }
+    public AddrTypeRepository(AppDbContext context, ICurrentUserProvider? currentUserProvider = null)
+        : base(context, currentUserProvider) { }
 }

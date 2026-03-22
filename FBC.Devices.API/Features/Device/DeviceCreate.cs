@@ -1,5 +1,4 @@
 using FBC.DBRepository;
-using FBC.Devices.API.Data;
 using FBC.Devices.API.Data.Repositories;
 using FBC.Mediator;
 
@@ -26,38 +25,46 @@ public sealed class DeviceCreate
     {
         public async Task<int> Handle(Command request, CancellationToken token = default)
         {
-            var device = new Models.Device
+            await deviceRepo.BeginTransactionAsync(token);
+            try
             {
-                Name = request.Name,
-                Description = request.Description,
-                DeviceGroupId = request.DeviceGroupId,
-                DeviceTypeId = request.DeviceTypeId,
-                DeviceModel = request.DeviceModel,
-                SerialNumber = request.SerialNumber,
-                Location = request.Location,
-                Note = request.Note,
-                IsActive = request.IsActive
-            };
-            await deviceRepo.ApplyOperation(EntityOperation.Create, device, alsoValidate: true);
-
-            if (request.Addresses?.Any() == true)
-            {
-                foreach (var addrDto in request.Addresses)
+                var device = new Models.Device
                 {
-                    var addr = new Models.DeviceAddr
+                    Name = request.Name,
+                    Description = request.Description,
+                    DeviceGroupId = request.DeviceGroupId,
+                    DeviceTypeId = request.DeviceTypeId,
+                    DeviceModel = request.DeviceModel,
+                    SerialNumber = request.SerialNumber,
+                    Location = request.Location,
+                    Note = request.Note,
+                    IsActive = request.IsActive
+                };
+                await deviceRepo.ApplyOperation(EntityOperation.Create, device, alsoValidate: true);
+
+                if (request.Addresses?.Any() == true)
+                {
+                    var addresses = request.Addresses.Select(a => new Models.DeviceAddr
                     {
                         DeviceId = device.Id,
-                        AddrTypeId = addrDto.AddrTypeId,
-                        Addr = addrDto.Addr,
-                        Username = addrDto.Username,
-                        Password = addrDto.Password,
-                        PeriodicPingCheck = addrDto.PeriodicPingCheck
-                    };
-                    deviceAddrRepo.ApplyOperation(EntityOperation.Create, addr, alsoValidate: true).GetAwaiter().GetResult();
-                }
-            }
+                        AddrTypeId = a.AddrTypeId,
+                        Addr = a.Addr,
+                        Username = a.Username,
+                        Password = a.Password,
+                        PeriodicPingCheck = a.PeriodicPingCheck
+                    }).ToList();
 
-            return device.Id;
+                    await deviceAddrRepo.ApplyOperationRange(EntityOperation.Create, addresses, alsoValidate: true);
+                }
+
+                await deviceRepo.CommitTransactionAsync(token);
+                return device.Id;
+            }
+            catch
+            {
+                await deviceRepo.RollbackTransactionAsync(token);
+                throw;
+            }
         }
     }
 }

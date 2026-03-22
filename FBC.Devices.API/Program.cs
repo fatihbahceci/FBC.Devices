@@ -16,6 +16,10 @@ var builder = WebApplication.CreateBuilder(args);
 AppDbContext.MigrateDB();
 builder.Services.AddDbContext<AppDbContext>();
 
+// Current user provider for audit tracking and role-based access control
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserProvider, CurrentUserProvider>();
+
 // Repositories - register both interface and concrete type
 builder.Services.RegisterRepositories(typeof(Program).Assembly);
 builder.Services.AddScoped<AddrTypeRepository>();

@@ -5,8 +5,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.API.Models;
 
-public class DeviceAddr : APIBaseEntity<DeviceAddr>
+public class DeviceAddr : APIBaseEntity<DeviceAddr>, IEntityRequiresRole
 {
+    public string[] GetRequiredRolesFor(EntityOperation operation) => [Constants.UserRoles.EditDevices];
+
     [ForeignKey(nameof(Device))]
     public int DeviceId { get; set; }
 

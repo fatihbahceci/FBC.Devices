@@ -1,4 +1,5 @@
 using FBC.Devices.API.Data;
+using FBC.Devices.API.Data.Repositories;
 using FBC.Devices.API.Services;
 using FBC.Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ public sealed class SearchDevices
 
     public record SearchResult(int TotalCount, List<Models.Device> Items);
 
-    internal sealed class Handler(AppDbContext db)
+    internal sealed class Handler(AppDbContext db, DeviceRepository deviceRepo)
         : IRequestHandler<Query, SearchResult>
     {
         public async Task<SearchResult> Handle(Query request, CancellationToken token = default)
@@ -22,18 +23,22 @@ public sealed class SearchDevices
 
             var deviceIds = DeviceSearchDataHelper.GetDeviceIds(db, fields, request.Filter ?? "");
 
-            var query = db.Devices.AsNoTracking()
-                .Where(d => deviceIds.Contains(d.Id))
-                .Include(d => d.DeviceType)
-                .Include(d => d.DeviceGroup)
-                .Include(d => d.DeviceAddresses).ThenInclude(a => a.AddrType!);
+            // Use GetByIdsAsync for fetching devices with includes
+            var allDevices = await deviceRepo.GetByIdsAsync(
+                deviceIds,
+                include: q => q
+                    .Include(d => d.DeviceType)
+                    .Include(d => d.DeviceGroup)
+                    .Include(d => d.DeviceAddresses).ThenInclude(a => a.AddrType!),
+                enableTracking: false,
+                cancellationToken: token);
 
-            var totalCount = await query.CountAsync(token);
-            var items = await query
+            var totalCount = allDevices.Count;
+            var items = allDevices
                 .OrderBy(d => d.Name)
                 .Skip(request.Skip)
                 .Take(request.Take)
-                .ToListAsync(token);
+                .ToList();
 
             return new SearchResult(totalCount, items);
         }

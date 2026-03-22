@@ -5,8 +5,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FBC.Devices.API.Models;
 
-public class AppUser : APIBaseEntity<AppUser>
+public class AppUser : APIBaseEntity<AppUser>, IEntityRequiresRole
 {
+    public string[] GetRequiredRolesFor(EntityOperation operation) => [Constants.UserRoles.SysAdmin];
+
     public string UserName { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
 

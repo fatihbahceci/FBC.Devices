@@ -3,8 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FBC.Devices.API.Models;
 
-public class DeviceType : APIBaseEntity<DeviceType>
+public class DeviceType : APIBaseEntity<DeviceType>, IEntityRequiresRole
 {
+    public string[] GetRequiredRolesFor(EntityOperation operation) => [Constants.UserRoles.EditDeviceTypes];
+
     public string Name { get; set; } = "New Type";
     public string? Description { get; set; }
 

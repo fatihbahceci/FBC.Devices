@@ -5,5 +5,6 @@ namespace FBC.Devices.API.Data.Repositories;
 
 public class DeviceAddrRepository : EFRepositoryBase<DeviceAddr, int, AppDbContext>
 {
-    public DeviceAddrRepository(AppDbContext context) : base(context) { }
+    public DeviceAddrRepository(AppDbContext context, ICurrentUserProvider? currentUserProvider = null)
+        : base(context, currentUserProvider) { }
 }
